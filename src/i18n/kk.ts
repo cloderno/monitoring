@@ -69,6 +69,8 @@ export const kk: Record<MessageKey, string> = {
   'history.sortAria': 'Күні бойынша сұрыптау',
   'history.newest': 'Алдымен жаңалары',
   'history.oldest': 'Алдымен ескілері',
+  'history.filterAll': 'Барлығы',
+  'history.statusAria': 'Күй бойынша сүзгі',
   'history.retailShort': 'бөлш.',
   'history.noPlace': 'Орны анықталмады',
   'history.testShort': 'тест',
@@ -185,7 +187,6 @@ export const kk: Record<MessageKey, string> = {
   // Каталог
   'catalog.title': 'ӘМАТ баға каталогы',
   'catalog.count': '{n} позиция',
-  'catalog.disclaimer': 'Демонстрациялық баға каталогы. Көтерме сатып алу және бөлшек сауда бағалары шартты, олар ресми немесе шекті бағалар болып табылмайды.',
   'catalog.search': 'Өнімді іздеу…',
   'catalog.loadError': 'Баға каталогын жүктеу мүмкін болмады',
   'catalog.headProduct': 'Тауар',

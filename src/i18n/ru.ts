@@ -67,6 +67,8 @@ export const ru = {
   'history.sortAria': 'Сортировка по дате',
   'history.newest': 'Сначала новые',
   'history.oldest': 'Сначала старые',
+  'history.filterAll': 'Все',
+  'history.statusAria': 'Фильтр по статусу',
   'history.retailShort': 'розн.',
   'history.noPlace': 'Место не определено',
   'history.testShort': 'тест',
@@ -183,7 +185,6 @@ export const ru = {
   // Каталог
   'catalog.title': 'Каталог цен СЗПТ',
   'catalog.count': '{n} позиций',
-  'catalog.disclaimer': 'Демонстрационный каталог цен. Оптовые закупочные и розничные цены условные и не являются официальными или предельными ценами.',
   'catalog.search': 'Поиск продукта…',
   'catalog.loadError': 'Не удалось загрузить каталог цен',
   'catalog.headProduct': 'Товар',

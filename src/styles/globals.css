@@ -1581,6 +1581,68 @@ select.input {
 
 /* ───────────── История ───────────── */
 
+/* Фильтр истории по статусу */
+.chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-top: -2px;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 7px 0 11px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.chip.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.chip__count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #eef1f6;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip--warning:not(.is-active) .chip__count {
+  background: var(--color-warning-soft);
+  color: #8a4700;
+}
+
+.chip.is-active .chip__count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
 .toolbar {
   display: flex;
   gap: 8px;

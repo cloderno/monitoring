@@ -47,10 +47,6 @@ export function ProductsPage() {
     <>
       <AppHeader title={t('catalog.title')} subtitle={catalog ? t('catalog.count', { n: products.length }) : undefined} />
       <div className="screen__body page-enter">
-        <StatusMessage tone="warning">
-          {t('catalog.disclaimer')}
-        </StatusMessage>
-
         <span className="field__control">
           <span className="field__icon">
             <Search size={18} />

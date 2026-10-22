@@ -4,12 +4,23 @@ import { ClipboardList, ImageOff, Search } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useCatalog } from '../hooks/useCatalog';
-import { dateLocale, useI18n } from '../i18n';
+import { dateLocale, useI18n, type MessageKey } from '../i18n';
+import type { Inspection } from '../types/inspection';
 import { inspectionProductLabel } from '../i18n/labels';
 import { useHistory } from '../store/HistoryContext';
 import { formatPrice, formatSigned } from '../utils/priceComparison';
 import { normalizeText } from '../utils/productMatching';
 import { StatusBadge } from './InspectionResultPage';
+
+type StatusFilter = 'all' | 'needs_confirmation' | 'success';
+
+const STATUS_FILTERS: { value: StatusFilter; label: MessageKey }[] = [
+  { value: 'all', label: 'history.filterAll' },
+  { value: 'needs_confirmation', label: 'status.needs' },
+  { value: 'success', label: 'status.success' },
+];
+
+const matchesStatus = (i: Inspection, filter: StatusFilter) => filter === 'all' || i.status === filter;
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString(dateLocale(), { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -21,13 +32,15 @@ export function HistoryPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [order, setOrder] = useState<'desc' | 'asc'>('desc');
+  const [status, setStatus] = useState<StatusFilter>('all');
 
   const list = useMemo(() => {
     const q = normalizeText(query);
     return items
+      .filter((i) => matchesStatus(i, status))
       .filter((i) => !q || normalizeText(`${i.productName ?? ''} ${inspectionProductLabel(i.productName, i.productId, products) ?? ''} ${i.brand ?? ''}`).includes(q))
       .sort((a, b) => (order === 'desc' ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt)));
-  }, [items, query, order, products]);
+  }, [items, query, order, status, products]);
 
   return (
     <>
@@ -68,6 +81,22 @@ export function HistoryPage() {
               <option value="desc">{t('history.newest')}</option>
               <option value="asc">{t('history.oldest')}</option>
             </select>
+          </div>
+
+          <div className="chips" role="radiogroup" aria-label={t('history.statusAria')}>
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                role="radio"
+                aria-checked={status === f.value}
+                className={`chip${status === f.value ? ' is-active' : ''}${f.value === 'needs_confirmation' ? ' chip--warning' : ''}`}
+                onClick={() => setStatus(f.value)}
+              >
+                {t(f.label)}
+                <span className="chip__count">{items.filter((i) => matchesStatus(i, f.value)).length}</span>
+              </button>
+            ))}
           </div>
 
           {list.length === 0 && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>{t('common.nothingFound')}</p>}
