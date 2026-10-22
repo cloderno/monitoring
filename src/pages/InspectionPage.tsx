@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Crosshair, FlaskConical, PencilLine, RotateCcw, Sparkles } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
@@ -10,7 +10,6 @@ import { StatusMessage } from '../components/StatusMessage';
 import { useCatalog } from '../hooks/useCatalog';
 import { useAuth } from '../store/AuthContext';
 import { useDraft } from '../store/DraftContext';
-import { useHistory } from '../store/HistoryContext';
 import { recognizePhoto } from '../services/geminiService';
 import { useI18n } from '../i18n';
 import { describeError } from '../utils/errorMessages';
@@ -59,8 +58,7 @@ export function InspectionPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
   const { session, logout } = useAuth();
-  const { add } = useHistory();
-  const { geo, photo, setPhotoFile } = useDraft();
+  const { geo, photo, setPhotoFile, setPending } = useDraft();
   const { products, error: catalogError, retry: retryCatalog } = useCatalog();
   const [phase, setPhase] = useState<Phase>({ kind: 'form' });
   const thumbnailRef = useRef<string | null>(null);
@@ -68,8 +66,23 @@ export function InspectionPage() {
 
   const location = geo.location;
   const canAnalyze = Boolean(photo && location && products.length);
+  const canEnterManually = Boolean(location && products.length);
 
-  const finish = (fields: ProductFields, confidence: number | null, manual: boolean) => {
+  // Сменили фото — миниатюра от прошлого снимка больше не подходит
+  useEffect(() => {
+    thumbnailRef.current = null;
+  }, [photo]);
+
+  /** Готовит результат и открывает его. В историю он попадёт только по кнопке «Сохранить результат» */
+  const finish = async (fields: ProductFields, confidence: number | null, manual: boolean) => {
+    // При ручном вводе фото не распознавалось — миниатюру для истории делаем здесь
+    if (!thumbnailRef.current && photo) {
+      try {
+        thumbnailRef.current = (await preparePhoto(photo.file, photo.url)).thumbnail;
+      } catch {
+        // результат сохранится без миниатюры
+      }
+    }
     const inspection = buildInspection({
       fields,
       catalog: products,
@@ -78,7 +91,7 @@ export function InspectionPage() {
       manual,
       photo: thumbnailRef.current,
     });
-    add(inspection);
+    setPending(inspection);
     navigate(`/inspection/result/${inspection.id}`, { replace: true });
     setPhotoFile(null);
   };
@@ -190,9 +203,6 @@ export function InspectionPage() {
                 <PrimaryButton size="sm" variant="secondary" icon={<RotateCcw size={16} />} onClick={analyze} disabled={!canAnalyze}>
                   {t('common.retry')}
                 </PrimaryButton>
-                <PrimaryButton size="sm" variant="secondary" icon={<PencilLine size={16} />} onClick={openManual} disabled={!location}>
-                  {t('insp.manual')}
-                </PrimaryButton>
               </>
             }
           >
@@ -204,6 +214,9 @@ export function InspectionPage() {
       <div className="screen__footer">
         <PrimaryButton size="lg" block icon={<Sparkles size={20} />} disabled={!canAnalyze} loading={busy} onClick={analyze}>
           {t('insp.analyze')}
+        </PrimaryButton>
+        <PrimaryButton variant="ghost" block icon={<PencilLine size={18} />} disabled={!canEnterManually || busy} onClick={openManual}>
+          {t('insp.manual')}
         </PrimaryButton>
         {!photo && <p className="small" style={{ textAlign: 'center' }}>{t('insp.addPhotoFirst')}</p>}
       </div>

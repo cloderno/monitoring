@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, History, ImageOff, MapPin, PencilLine, Plus, SearchX } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ExternalLink, History, ImageOff, MapPin, PencilLine, Plus, Save, SearchX } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { LocationMap } from '../components/LocationMap';
 import { ManualConfirmSheet } from '../components/ManualConfirmSheet';
@@ -9,6 +9,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
 import { TestBadge, testWarning } from '../components/LocationCard';
 import { useCatalog } from '../hooks/useCatalog';
+import { useDraft } from '../store/DraftContext';
 import { useHistory } from '../store/HistoryContext';
 import { formatCoords, googleMapsUrl } from '../services/geolocationService';
 import { dateLocale, useI18n } from '../i18n';
@@ -36,11 +37,48 @@ export function InspectionResultPage() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { get, update } = useHistory();
+  const { get, update, add } = useHistory();
+  const { pending, setPending } = useDraft();
   const { products } = useCatalog();
   const [editing, setEditing] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const fromHistory = pathname.startsWith('/history');
-  const inspection = id ? get(id) : undefined;
+
+  // Сохранённый результат берём из истории, свежий — из черновика, пока его не сохранили
+  const saved = id ? get(id) : undefined;
+  const draft = !saved && pending && pending.id === id ? pending : undefined;
+  const inspection = saved ?? draft;
+  const unsaved = Boolean(draft);
+
+  // Уход с экрана без сохранения — переспрашиваем
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => unsaved && currentLocation.pathname !== nextLocation.pathname);
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    if (window.confirm(t('result.leaveConfirm'))) {
+      setPending(null);
+      blocker.proceed();
+    } else {
+      blocker.reset();
+    }
+  }, [blocker, setPending, t]);
+
+  // Закрытие вкладки или перезагрузка — браузер покажет своё предупреждение
+  useEffect(() => {
+    if (!unsaved) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [unsaved]);
+
+  const save = () => {
+    if (!draft) return;
+    add(draft);
+    setPending(null);
+    setJustSaved(true);
+  };
 
   if (!inspection) {
     return (
@@ -69,10 +107,14 @@ export function InspectionResultPage() {
         title={t('result.title')}
         subtitle={formatFullDate(i.createdAt)}
         backTo={fromHistory ? '/history' : '/'}
-        right={<StatusBadge status={i.status} />}
+        right={unsaved ? <span className="badge badge--warning">{t('result.unsaved')}</span> : <StatusBadge status={i.status} />}
       />
 
       <div className="screen__body page-enter">
+        {unsaved && <StatusMessage tone="info">{t('result.unsavedHint')}</StatusMessage>}
+        {justSaved && !unsaved && (
+          <StatusMessage tone="success" title={t('result.saved')} />
+        )}
         <section className="card appear">
           <div className="product-head">
             {i.photo ? (
@@ -153,10 +195,21 @@ export function InspectionResultPage() {
         </section>
 
         <div className="stack">
-          <PrimaryButton size="lg" block icon={<Plus size={20} />} onClick={() => navigate('/inspection')}>
-            {t('result.new')}
-          </PrimaryButton>
-          {!fromHistory && (
+          {unsaved ? (
+            <PrimaryButton size="lg" block icon={<Save size={20} />} onClick={save}>
+              {t('result.save')}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton size="lg" block icon={<Plus size={20} />} onClick={() => navigate('/inspection')}>
+              {t('result.new')}
+            </PrimaryButton>
+          )}
+          {unsaved && (
+            <PrimaryButton variant="secondary" block icon={<Plus size={18} />} onClick={() => navigate('/inspection')}>
+              {t('result.new')}
+            </PrimaryButton>
+          )}
+          {!fromHistory && !unsaved && (
             <PrimaryButton variant="secondary" block icon={<History size={18} />} onClick={() => navigate('/history')}>
               {t('result.toHistory')}
             </PrimaryButton>
@@ -181,7 +234,10 @@ export function InspectionResultPage() {
           submitLabel={t('common.save')}
           onCancel={() => setEditing(false)}
           onSubmit={(fields) => {
-            update(buildInspection({ base: i, fields, catalog: products, location: null, confidence: null, manual: true, photo: null }));
+            const changed = buildInspection({ base: i, fields, catalog: products, location: null, confidence: null, manual: true, photo: null });
+            // Несохранённый результат правим в черновике, сохранённый — сразу в истории
+            if (unsaved) setPending(changed);
+            else update(changed);
             setEditing(false);
           }}
         />

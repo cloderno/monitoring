@@ -1508,6 +1508,12 @@ select.input {
   color: #1d3f99;
 }
 
+/* Наценка к оптовой закупке — нейтральный тёмно-серый, чтобы плашка читалась на сером блоке */
+.price-box__diff--neutral {
+  background: #e2e6ee;
+  color: #3b4559;
+}
+
 /* Цена на полке ниже оптовой закупочной — редкость, стоит обратить внимание */
 .price-box__diff--warning {
   background: var(--color-warning-soft);
