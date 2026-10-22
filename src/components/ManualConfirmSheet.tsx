@@ -157,7 +157,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
                 aria-label={t('sheet.packageAmountAria')}
               />
               <select
-                className="input input-group__unit"
+                className={`input input-group__unit${packageNeeded && priceValid ? ' is-invalid' : ''}`}
                 value={packageUnit}
                 onChange={(e) => setPackageUnitChoice(e.target.value as PackageUnit)}
                 aria-label={t('sheet.packageUnitAria')}

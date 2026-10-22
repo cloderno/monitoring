@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ClipboardList, ImageOff, Search } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, ClipboardList, ImageOff, Search } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useCatalog } from '../hooks/useCatalog';
@@ -16,8 +16,9 @@ type StatusFilter = 'all' | 'needs_confirmation' | 'success';
 
 const STATUS_FILTERS: { value: StatusFilter; label: MessageKey }[] = [
   { value: 'all', label: 'history.filterAll' },
-  { value: 'needs_confirmation', label: 'status.needs' },
-  { value: 'success', label: 'status.success' },
+  // Короткие подписи, чтобы три фильтра помещались на узком экране
+  { value: 'needs_confirmation', label: 'history.filterNeeds' },
+  { value: 'success', label: 'history.filterDone' },
 ];
 
 const matchesStatus = (i: Inspection, filter: StatusFilter) => filter === 'all' || i.status === filter;
@@ -72,15 +73,16 @@ export function HistoryPage() {
                 aria-label={t('history.filterAria')}
               />
             </span>
-            <select
-              className="input"
-              value={order}
-              onChange={(e) => setOrder(e.target.value as 'desc' | 'asc')}
-              aria-label={t('history.sortAria')}
+            {/* Сортировка — компактной кнопкой, чтобы поиску хватало места на узком экране */}
+            <button
+              type="button"
+              className="sort-btn"
+              onClick={() => setOrder((o) => (o === 'desc' ? 'asc' : 'desc'))}
+              aria-label={`${t('history.sortAria')}: ${order === 'desc' ? t('history.newest') : t('history.oldest')}`}
+              title={order === 'desc' ? t('history.newest') : t('history.oldest')}
             >
-              <option value="desc">{t('history.newest')}</option>
-              <option value="asc">{t('history.oldest')}</option>
-            </select>
+              {order === 'desc' ? <ArrowDownWideNarrow size={20} /> : <ArrowUpNarrowWide size={20} />}
+            </button>
           </div>
 
           <div className="chips" role="radiogroup" aria-label={t('history.statusAria')}>
@@ -93,8 +95,9 @@ export function HistoryPage() {
                 className={`chip${status === f.value ? ' is-active' : ''}${f.value === 'needs_confirmation' ? ' chip--warning' : ''}`}
                 onClick={() => setStatus(f.value)}
               >
-                {t(f.label)}
-                <span className="chip__count">{items.filter((i) => matchesStatus(i, f.value)).length}</span>
+                <span className="chip__label">{t(f.label)}</span>
+                {/* У «Все» число не нужно — общее количество уже в шапке */}
+                {f.value !== 'all' && <span className="chip__count">{items.filter((i) => matchesStatus(i, f.value)).length}</span>}
               </button>
             ))}
           </div>

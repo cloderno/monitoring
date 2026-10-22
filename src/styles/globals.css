@@ -103,6 +103,9 @@ p {
 .screen__body {
   flex: 1;
   overflow-y: auto;
+  /* Место под полосу прокрутки всегда занято — иначе при коротком списке (например, после фильтра)
+     полоса исчезает и весь экран сдвигается вбок */
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
   padding: 8px var(--gutter) 24px;
   display: flex;
@@ -1585,8 +1588,6 @@ select.input {
 .chips {
   display: flex;
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
   margin-top: -2px;
 }
 
@@ -1595,12 +1596,15 @@ select.input {
 }
 
 .chip {
-  flex: 0 0 auto;
+  /* Кнопки растягиваются на всю строку по длине подписи; если тесно — подпись сокращается многоточием, а не уходит за край */
+  flex: 1 1 auto;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   height: 34px;
-  padding: 0 7px 0 11px;
+  padding: 0 8px;
   border-radius: var(--radius-pill);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
@@ -1620,7 +1624,15 @@ select.input {
   color: #fff;
 }
 
+.chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chip__count {
+  flex-shrink: 0;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
@@ -1652,10 +1664,18 @@ select.input {
   flex: 1;
 }
 
-.toolbar select.input {
-  width: auto;
+.sort-btn {
+  flex: 0 0 auto;
+  width: 44px;
   height: 44px;
-  font-size: 14px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
 }
 
 .history-item {
