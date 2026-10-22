@@ -41,12 +41,12 @@ export function InspectionResultPage() {
   if (!inspection) {
     return (
       <>
-        <AppHeader title="Результат обследования" backTo={fromHistory ? '/history' : '/'} />
+        <AppHeader title="Результат проверки" backTo={fromHistory ? '/history' : '/'} />
         <div className="empty">
           <div className="empty__icon">
             <SearchX size={32} />
           </div>
-          <div className="empty__title">Обследование не найдено</div>
+          <div className="empty__title">Проверка не найдена</div>
           <p>Возможно, история была очищена в этом браузере.</p>
           <Link to="/history" className="btn btn--secondary" style={{ marginTop: 8 }}>
             Перейти в историю
@@ -62,7 +62,7 @@ export function InspectionResultPage() {
   return (
     <>
       <AppHeader
-        title="Результат обследования"
+        title="Результат проверки"
         subtitle={formatFullDate(i.createdAt)}
         backTo={fromHistory ? '/history' : '/'}
         right={<StatusBadge status={i.status} />}
@@ -104,7 +104,7 @@ export function InspectionResultPage() {
             <span className="card__icon">
               <MapPin size={20} />
             </span>
-            <h2 className="card__title">Место обследования</h2>
+            <h2 className="card__title">Место проверки</h2>
             {isTest && <TestBadge />}
           </div>
           <div className="kv">
@@ -150,7 +150,7 @@ export function InspectionResultPage() {
 
         <div className="stack">
           <PrimaryButton size="lg" block icon={<Plus size={20} />} onClick={() => navigate('/inspection')}>
-            Новое обследование
+            Новая проверка
           </PrimaryButton>
           {!fromHistory && (
             <PrimaryButton variant="secondary" block icon={<History size={18} />} onClick={() => navigate('/history')}>

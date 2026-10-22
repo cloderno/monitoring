@@ -39,8 +39,8 @@ export function confirmationReasons(r: RecognitionResult, fields: ProductFields,
   if (r.shelf_price === null) reasons.push('Цена на ценнике не распознана — введите её вручную или переснимите фото.');
   if (!r.product_name) reasons.push('Товар не распознан.');
   if (r.confidence < 0.7) reasons.push(`Низкая уверенность распознавания (${Math.round(r.confidence * 100)}%).`);
-  if (r.product_name && !fields.productId) reasons.push('Товар не найден в справочнике — выберите его из списка.');
-  if (fields.productId && matchConfidence === 'low') reasons.push('Сопоставление со справочником неоднозначно — проверьте выбранный товар.');
+  if (r.product_name && !fields.productId) reasons.push('Товар не найден в каталоге — выберите его из списка.');
+  if (fields.productId && matchConfidence === 'low') reasons.push('Сопоставление с каталогом неоднозначно — проверьте выбранный товар.');
   if (r.needs_confirmation && reasons.length === 0) reasons.push('Сервис распознавания просит проверить данные.');
   if (reasons.length === 0) {
     const product = catalog.find((p) => p.id === fields.productId) ?? null;

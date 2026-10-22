@@ -4,7 +4,7 @@
 
 export const USERS = [
   {
-    login: 'aigerim_inspector',
+    login: 'inspect',
     passwordHash:
       'e9f21c976e76c2df3261af032ca4396b:4bc74535827c1461871a01d5f61e84b43cded4e8a549133fd698c49a39559efe',
     role: 'Инспектор мониторинга цен',

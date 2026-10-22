@@ -10,7 +10,7 @@ import { ProductsPage } from '../pages/ProductsPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { WelcomePage } from '../pages/WelcomePage';
 
-/** Доступ только после входа; контекст обследования живёт, пока пользователь в системе */
+/** Доступ только после входа; контекст проверки живёт, пока пользователь в системе */
 function ProtectedLayout() {
   const { session } = useAuth();
   if (!session) return <Navigate to="/login" replace />;

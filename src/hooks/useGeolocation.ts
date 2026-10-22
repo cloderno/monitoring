@@ -14,7 +14,7 @@ export type TestChoice = 'real' | TestCityId;
 export interface GeolocationState {
   status: GeoStatus;
   error: GeoError['code'] | null;
-  /** Итоговое местоположение обследования (реальное или тестовое — никогда не смешиваются) */
+  /** Итоговое местоположение проверки (реальное или тестовое — никогда не смешиваются) */
   location: InspectionLocation | null;
   testMode: boolean;
   testChoice: TestChoice;

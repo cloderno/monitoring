@@ -132,7 +132,7 @@ export function InspectionPage() {
   return (
     <>
       <AppHeader
-        title="Новое обследование"
+        title="Новая проверка"
         subtitle="Сделайте фотографию товара и ценника"
         backTo="/"
         right={<GeoIndicator status={geo.status} isTest={geo.isTest} />}
@@ -145,14 +145,14 @@ export function InspectionPage() {
         {catalogError && (
           <StatusMessage
             tone="error"
-            title="Справочник товаров не загрузился"
+            title="Каталог цен не загрузился"
             actions={
               <PrimaryButton size="sm" variant="secondary" onClick={retryCatalog}>
                 Повторить
               </PrimaryButton>
             }
           >
-            Без справочника сравнение цен невозможно.
+            Без каталога сравнение цен невозможно.
           </StatusMessage>
         )}
 
@@ -173,7 +173,7 @@ export function InspectionPage() {
               </>
             }
           >
-            Каждое обследование фиксируется с координатами. Разрешите доступ к геолокации или включите тестовый режим.
+            Каждая проверка фиксируется с координатами. Разрешите доступ к геолокации или включите тестовый режим.
           </StatusMessage>
         )}
 

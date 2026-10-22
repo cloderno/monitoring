@@ -26,17 +26,17 @@ export function HistoryPage() {
 
   return (
     <>
-      <AppHeader title="История обследований" subtitle={`Всего: ${items.length}`} showBack={false} />
+      <AppHeader title="История проверок" subtitle={`Всего: ${items.length}`} showBack={false} />
 
       {items.length === 0 ? (
         <div className="empty page-enter">
           <div className="empty__icon">
             <ClipboardList size={32} />
           </div>
-          <div className="empty__title">Обследований пока нет</div>
+          <div className="empty__title">Проверок пока нет</div>
           <p>Результаты проверок будут появляться здесь.</p>
           <PrimaryButton style={{ marginTop: 8 }} onClick={() => navigate('/inspection')}>
-            Начать обследование
+            Начать проверку
           </PrimaryButton>
         </div>
       ) : (

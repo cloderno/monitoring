@@ -36,12 +36,12 @@ export function WelcomePage() {
           <div className="hero__icon">
             <ScanLine size={24} />
           </div>
-          <h2 className="hero__title">Готовы начать обследование?</h2>
+          <h2 className="hero__title">Готовы начать проверку?</h2>
           <p className="hero__text">
             Сфотографируйте товар вместе с ценником, чтобы проверить его стоимость и зафиксировать местоположение.
           </p>
           <PrimaryButton size="lg" block icon={<ScanLine size={20} />} onClick={() => navigate('/inspection')}>
-            Начать обследование
+            Начать проверку
           </PrimaryButton>
         </section>
 
@@ -49,14 +49,14 @@ export function WelcomePage() {
           <span className="card__icon">
             <BookOpen size={18} />
           </span>
-          <span className="link-row__text">Справочник товаров</span>
+          <span className="link-row__text">Каталог цен СЗПТ</span>
           <ChevronRight size={20} color="var(--color-text-muted)" />
         </Link>
         <Link to="/history" className="link-row appear" style={{ animationDelay: '120ms' }}>
           <span className="card__icon">
             <History size={18} />
           </span>
-          <span className="link-row__text">История обследований</span>
+          <span className="link-row__text">История проверок</span>
           <ChevronRight size={20} color="var(--color-text-muted)" />
         </Link>
       </div>

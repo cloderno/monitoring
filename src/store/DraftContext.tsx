@@ -14,7 +14,7 @@ interface DraftContextValue {
 
 const DraftContext = createContext<DraftContextValue | null>(null);
 
-/** Контекст текущего обследования: фото и местоположение сохраняются при переходах между экранами */
+/** Контекст текущей проверки: фото и местоположение сохраняются при переходах между экранами */
 export function DraftProvider({ children }: { children: ReactNode }) {
   const geo = useGeolocation();
   const [photo, setPhoto] = useState<DraftPhoto | null>(null);

@@ -51,7 +51,7 @@ export function ProfilePage() {
           <span className="card__icon">
             <BookOpen size={18} />
           </span>
-          <span className="link-row__text">Справочник товаров</span>
+          <span className="link-row__text">Каталог цен СЗПТ</span>
           <ChevronRight size={20} color="var(--color-text-muted)" />
         </Link>
 
@@ -61,7 +61,7 @@ export function ProfilePage() {
             block
             icon={<Trash2 size={18} />}
             onClick={() => {
-              if (window.confirm('Удалить все обследования из истории этого браузера?')) clear();
+              if (window.confirm('Удалить все проверки из истории этого браузера?')) clear();
             }}
           >
             Очистить историю

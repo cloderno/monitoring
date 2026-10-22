@@ -21,7 +21,7 @@ const pinIcon = (isTest: boolean) =>
     popupAnchor: [0, -26],
   });
 
-/** Интерактивная карта Leaflet + OpenStreetMap с маркером места обследования */
+/** Интерактивная карта Leaflet + OpenStreetMap с маркером места проверки */
 export function LocationMap({ latitude, longitude, isTest = false, label, zoom = 14 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -80,7 +80,7 @@ export function LocationMap({ latitude, longitude, isTest = false, label, zoom =
 
   return (
     <div className="map">
-      <div ref={containerRef} className="map__canvas" aria-label="Карта места обследования" />
+      <div ref={containerRef} className="map__canvas" aria-label="Карта места проверки" />
       {failed && (
         <div className="map__fallback">
           <MapPinOff size={22} />

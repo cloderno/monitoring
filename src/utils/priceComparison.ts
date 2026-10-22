@@ -76,7 +76,7 @@ export function comparePrice(
   packageSize: string | null,
   product: Product | null,
 ): ComparisonResult {
-  if (!product) return notComparable('Товар не найден в справочнике — выберите его вручную.');
+  if (!product) return notComparable('Товар не найден в каталоге — выберите его вручную.');
   if (shelfPrice === null || !(shelfPrice > 0)) return notComparable('Цена на ценнике не распознана.');
 
   const target = normalizeUnit(product.unit);
@@ -104,7 +104,7 @@ export function comparePrice(
         );
       } else {
         return notComparable(
-          `Не удалось привести цену к 1 ${unitLabel[target]}: фасовка «${packageSize ?? '—'}» несовместима с единицей справочника.`,
+          `Не удалось привести цену к 1 ${unitLabel[target]}: фасовка «${packageSize ?? '—'}» несовместима с единицей каталога.`,
         );
       }
     }
@@ -148,3 +148,23 @@ export const COMPARISON_LABEL: Record<ComparisonStatus, string> = {
   equal: 'Совпадает с розничной ценой',
   not_comparable: 'Сравнение невозможно',
 };
+
+/** Подпись единицы цены по-русски: «за 1 кг», «за 1 л», «за 1 шт.», «за упаковку» */
+export function perUnitLabel(unit: string | null | undefined): string {
+  if (!unit) return '';
+  const base = normalizeUnit(unit);
+  if (base === 'pack') return 'за упаковку';
+  if (base) return `за 1 ${unitLabel[base]}`;
+  return `за ${unit}`;
+}
+
+/** Разница цены на ценнике с ориентиром простыми словами: «на 61 ₸ дороже», «+7,2%» */
+export function describeDifference(price: number, reference: number): { text: string; percent: string; sign: -1 | 0 | 1 } {
+  const diff = round(price - reference, 2);
+  const percent = round((diff / reference) * 100, 1);
+  if (diff === 0) return { text: 'совпадает', percent: '0%', sign: 0 };
+  const amount = formatPrice(Math.abs(diff));
+  return diff > 0
+    ? { text: `на ${amount} дороже`, percent: formatSigned(percent, '%'), sign: 1 }
+    : { text: `на ${amount} дешевле`, percent: formatSigned(percent, '%'), sign: -1 };
+}

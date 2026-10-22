@@ -4,7 +4,7 @@ import { AppHeader } from '../components/AppHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
 import { useCatalog } from '../hooks/useCatalog';
-import { formatPrice } from '../utils/priceComparison';
+import { formatPrice, perUnitLabel } from '../utils/priceComparison';
 import { normalizeText } from '../utils/productMatching';
 
 const EMOJI: Record<string, string> = {
@@ -39,10 +39,10 @@ export function ProductsPage() {
 
   return (
     <>
-      <AppHeader title="Справочник товаров" subtitle={catalog ? `${products.length} позиций` : undefined} />
+      <AppHeader title="Каталог цен СЗПТ" subtitle={catalog ? `${products.length} позиций` : undefined} />
       <div className="screen__body page-enter">
         <StatusMessage tone="warning">
-          Демонстрационный справочник. Оптовые закупочные и розничные цены условные и не являются официальными или предельными ценами.
+          Демонстрационный каталог цен. Оптовые закупочные и розничные цены условные и не являются официальными или предельными ценами.
         </StatusMessage>
 
         <span className="field__control">
@@ -60,7 +60,7 @@ export function ProductsPage() {
         {error && (
           <StatusMessage
             tone="error"
-            title="Не удалось загрузить справочник"
+            title="Не удалось загрузить каталог цен"
             actions={
               <PrimaryButton size="sm" variant="secondary" onClick={retry}>
                 Повторить
@@ -87,7 +87,7 @@ export function ProductsPage() {
                 <div className="product-row__prices">
                   <div className="product-row__price">
                     {formatPrice(p.retailPrice)}
-                    <span className="small"> / {p.unit}</span>
+                    <span className="small"> {perUnitLabel(p.unit)}</span>
                   </div>
                   <div className="small">опт {formatPrice(p.wholesalePrice)}</div>
                 </div>

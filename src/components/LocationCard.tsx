@@ -19,7 +19,7 @@ export function TestBadge() {
   return <span className="badge badge--test">ТЕСТОВЫЙ РЕЖИМ</span>;
 }
 
-/** Карточка «Место обследования» на экране обследования: реальная геолокация или тестовая точка */
+/** Карточка «Место проверки» на экране проверки: реальная геолокация или тестовая точка */
 export function LocationCard({ geo }: { geo: GeolocationState }) {
   const { location, status, error, isTest, testMode, testChoice } = geo;
 
@@ -31,7 +31,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="card__step">Шаг 1</div>
-          <h2 className="card__title">Место обследования</h2>
+          <h2 className="card__title">Место проверки</h2>
         </div>
         {isTest && <TestBadge />}
       </div>
