@@ -1508,6 +1508,12 @@ select.input {
   color: #1d3f99;
 }
 
+/* Цена на полке ниже оптовой закупочной — редкость, стоит обратить внимание */
+.price-box__diff--warning {
+  background: var(--color-warning-soft);
+  color: #8a4700;
+}
+
 .delta {
   margin-top: 12px;
   border-radius: var(--radius-md);

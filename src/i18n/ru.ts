@@ -193,6 +193,8 @@ export const ru = {
   'cmp.wholesale': 'Опт. закупка',
   'cmp.retail': 'Розница',
   'cmp.shelfIs': 'Ценник {text}',
+  'cmp.markup': 'Наценка',
+  'cmp.belowWholesale': 'Ниже закупки',
   'cmp.disclaimer': 'Сравнение выполнено с демонстрационными ценами каталога и не является выводом о нарушении.',
   'cmp.higher': 'Выше розничной цены',
   'cmp.lower': 'Ниже розничной цены',
