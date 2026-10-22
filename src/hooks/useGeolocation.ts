@@ -64,16 +64,24 @@ export function useGeolocation(): GeolocationState {
     }
   }, []);
 
-  // Если доступ к геолокации уже разрешён — определяем местоположение сразу, без лишнего нажатия.
+  // При открытии экрана сразу определяем местоположение: браузер сам покажет запрос разрешения,
+  // если доступ ещё не выдан. Если доступ ранее запрещён — не дёргаем, пользователь увидит подсказку и кнопку.
   // В тестовом режиме GPS не запрашивается.
+  const autoRequested = useRef(false);
   useEffect(() => {
-    if (isTest || gps || status !== 'idle' || !navigator.permissions) return;
+    if (isTest || gps || status !== 'idle' || autoRequested.current) return;
+    autoRequested.current = true;
+    if (!navigator.permissions?.query) {
+      requestGps();
+      return;
+    }
     navigator.permissions
       .query({ name: 'geolocation' })
       .then((p) => {
-        if (p.state === 'granted') requestGps();
+        if (p.state !== 'denied') requestGps();
       })
-      .catch(() => undefined);
+      // Старые Safari не умеют спрашивать статус геолокации — просто запрашиваем
+      .catch(() => requestGps());
   }, [isTest, gps, status, requestGps]);
 
   const setTestMode = useCallback((on: boolean) => {
