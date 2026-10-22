@@ -14,8 +14,7 @@ export function LoginPage() {
     import.meta.env.VITE_LOGIN_NAME ?? ''
   );
 
-  const [password, setPassword] = useState(
-  );
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
