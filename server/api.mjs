@@ -58,7 +58,7 @@ export function createApiHandler(env = process.env) {
   const geminiKey = env.GEMINI_API_KEY || '';
   const geminiModel = env.GEMINI_MODEL || 'gemini-3.8-flash';
   const thinkingLevel = env.GEMINI_THINKING_LEVEL ?? 'low';
-  const fallbackModels = (env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash,gemini-3.7-flash')
+  const fallbackModels = (env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-3.5-flash-lite')
     .split(',')
     .map((m) => m.trim())
     .filter(Boolean);
