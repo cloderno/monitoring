@@ -232,11 +232,17 @@ p {
   color: #fff;
   font-weight: 700;
   font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.02em;
   display: grid;
   place-items: center;
+  /* у <button> есть стандартный внутренний отступ — он сдвигал инициалы */
+  padding: 0;
   border: 0;
   cursor: pointer;
   flex-shrink: 0;
+  /* обрезаем пустое место шрифта над и под буквами, чтобы инициалы стояли ровно по центру круга */
+  text-box: trim-both cap alphabetic;
 }
 
 .avatar--lg {

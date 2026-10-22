@@ -15,7 +15,6 @@ export function LoginPage() {
   );
 
   const [password, setPassword] = useState(
-    import.meta.env.VITE_LOGIN_PASSWORD ?? ''
   );
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
