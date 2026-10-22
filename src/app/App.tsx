@@ -1,9 +1,11 @@
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '../store/AuthContext';
 import { HistoryProvider } from '../store/HistoryContext';
+import { useI18n } from '../i18n';
 import { router } from './router';
 
 export function App() {
+  const { t } = useI18n();
   return (
     <AuthProvider>
       <HistoryProvider>
@@ -12,7 +14,7 @@ export function App() {
           <div className="app-shell">
             <RouterProvider router={router} />
           </div>
-          <div className="demo-caption">Мониторинг цен — Контроль СЗПТ · мобильный макет для демонстрации</div>
+          <div className="demo-caption">{t('app.demoCaption')}</div>
         </div>
       </HistoryProvider>
     </AuthProvider>

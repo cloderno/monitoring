@@ -40,7 +40,7 @@ const RESPONSE_SCHEMA = {
   ],
 };
 
-function buildPrompt(products) {
+function buildPrompt(products, lang = 'ru') {
   const catalog = products.map((p) => `- ${p.id}: ${p.name} (${p.unit})`).join('\n');
   return `Ты помогаешь инспектору мониторинга цен в Казахстане. На фотографии — продовольственный товар вместе с его ценником.
 Проанализируй изображение целиком и верни JSON строго по схеме.
@@ -55,13 +55,13 @@ function buildPrompt(products) {
 - catalog_id — id подходящей позиции из справочника ниже, если товар явно к ней относится; иначе null.
 - confidence — уверенность распознавания пары «товар + цена» от 0 до 1.
 - needs_confirmation — true, если что-либо распознано неуверенно и человеку нужно проверить данные.
-- message — короткое пояснение на русском для инспектора, если есть проблема; иначе null.
+- message — короткое пояснение для инспектора, если есть проблема; иначе null. ${lang === 'kk' ? 'Пиши message на казахском языке (қазақ тілінде).' : 'Пиши message на русском языке.'}
 
 Строгие правила:
 1. Никогда не придумывай цену. Если цифры на ценнике нечитаемы, размыты или обрезаны — shelf_price = null, needs_confirmation = true, в message объясни причину.
 2. Не подставляй цену из справочника — справочник дан только для выбора catalog_id.
 3. Не бери цену с соседнего ценника, если нет уверенности, что он относится к этому товару.
-4. Если в кадре несколько товаров и ценников и соответствие определить нельзя — shelf_price = null, needs_confirmation = true, message: «На фото несколько товаров и ценников. Сделайте снимок одного товара с его ценником».
+4. Если в кадре несколько товаров и ценников и соответствие определить нельзя — shelf_price = null, needs_confirmation = true, в message попроси сделать снимок одного товара с его ценником (по-русски это звучит так: «На фото несколько товаров и ценников. Сделайте снимок одного товара с его ценником»).
 5. Если на фото нет товара или ценника — укажи это в message, needs_confirmation = true.
 6. Если confidence < 0.7 — needs_confirmation = true.
 
@@ -115,7 +115,7 @@ export function validateRecognition(raw, products) {
   return result;
 }
 
-async function callModel({ apiKey, model, mimeType, base64, products, thinkingLevel, timeoutMs }) {
+async function callModel({ apiKey, model, mimeType, base64, products, thinkingLevel, lang, timeoutMs }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   let response;
   try {
@@ -127,7 +127,7 @@ async function callModel({ apiKey, model, mimeType, base64, products, thinkingLe
         contents: [
           {
             role: 'user',
-            parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: buildPrompt(products) }],
+            parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: buildPrompt(products, lang) }],
           },
         ],
         generationConfig: {

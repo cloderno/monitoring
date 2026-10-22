@@ -7,14 +7,16 @@ import { ManualConfirmSheet } from '../components/ManualConfirmSheet';
 import { PriceComparisonCard } from '../components/PriceComparisonCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
-import { TEST_WARNING, TestBadge } from '../components/LocationCard';
+import { TestBadge, testWarning } from '../components/LocationCard';
 import { useCatalog } from '../hooks/useCatalog';
 import { useHistory } from '../store/HistoryContext';
 import { formatCoords, googleMapsUrl } from '../services/geolocationService';
+import { dateLocale, useI18n } from '../i18n';
+import { categoryLabel, inspectionProductLabel, packageLabel } from '../i18n/labels';
 import { buildInspection } from '../utils/inspection';
 
 export const formatFullDate = (iso: string) =>
-  new Date(iso).toLocaleString('ru-RU', {
+  new Date(iso).toLocaleString(dateLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -23,15 +25,17 @@ export const formatFullDate = (iso: string) =>
   });
 
 export function StatusBadge({ status }: { status: 'success' | 'needs_confirmation' | 'error' }) {
-  if (status === 'success') return <span className="badge badge--success">Выполнено</span>;
-  if (status === 'needs_confirmation') return <span className="badge badge--warning">Требует проверки</span>;
-  return <span className="badge badge--danger">Ошибка</span>;
+  const { t } = useI18n();
+  if (status === 'success') return <span className="badge badge--success">{t('status.success')}</span>;
+  if (status === 'needs_confirmation') return <span className="badge badge--warning">{t('status.needs')}</span>;
+  return <span className="badge badge--danger">{t('status.error')}</span>;
 }
 
 export function InspectionResultPage() {
   const { id } = useParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { get, update } = useHistory();
   const { products } = useCatalog();
   const [editing, setEditing] = useState(false);
@@ -41,15 +45,15 @@ export function InspectionResultPage() {
   if (!inspection) {
     return (
       <>
-        <AppHeader title="Результат проверки" backTo={fromHistory ? '/history' : '/'} />
+        <AppHeader title={t('result.title')} backTo={fromHistory ? '/history' : '/'} />
         <div className="empty">
           <div className="empty__icon">
             <SearchX size={32} />
           </div>
-          <div className="empty__title">Проверка не найдена</div>
-          <p>Возможно, история была очищена в этом браузере.</p>
+          <div className="empty__title">{t('result.notFound')}</div>
+          <p>{t('result.notFoundText')}</p>
           <Link to="/history" className="btn btn--secondary" style={{ marginTop: 8 }}>
-            Перейти в историю
+            {t('result.toHistory')}
           </Link>
         </div>
       </>
@@ -62,7 +66,7 @@ export function InspectionResultPage() {
   return (
     <>
       <AppHeader
-        title="Результат проверки"
+        title={t('result.title')}
         subtitle={formatFullDate(i.createdAt)}
         backTo={fromHistory ? '/history' : '/'}
         right={<StatusBadge status={i.status} />}
@@ -72,24 +76,24 @@ export function InspectionResultPage() {
         <section className="card appear">
           <div className="product-head">
             {i.photo ? (
-              <img className="product-thumb" src={i.photo} alt="Фото товара с ценником" />
+              <img className="product-thumb" src={i.photo} alt={t('result.photoAlt')} />
             ) : (
               <span className="product-thumb">
                 <ImageOff size={24} />
               </span>
             )}
             <div style={{ minWidth: 0 }}>
-              <div className="product-name">{i.productName ?? 'Товар не распознан'}</div>
+              <div className="product-name">{inspectionProductLabel(i.productName, i.productId, products) ?? t('product.unrecognized')}</div>
               <div className="muted">
-                {[i.brand, i.packageSize].filter(Boolean).join(' · ') || 'Бренд и фасовка не определены'}
+                {[i.brand, packageLabel(i.packageSize)].filter(Boolean).join(' · ') || t('result.noBrand')}
               </div>
               <div className="inline" style={{ marginTop: 6 }}>
-                {i.category && <span className="badge badge--info">{i.category}</span>}
+                {i.category && <span className="badge badge--info">{categoryLabel(i.category, products)}</span>}
                 {i.manual ? (
-                  <span className="badge badge--neutral">Подтверждено вручную</span>
+                  <span className="badge badge--neutral">{t('result.manual')}</span>
                 ) : (
                   i.confidence !== null && (
-                    <span className="badge badge--neutral">Уверенность {Math.round(i.confidence * 100)}%</span>
+                    <span className="badge badge--neutral">{t('result.confidence', { n: Math.round(i.confidence * 100) })}</span>
                   )
                 )}
               </div>
@@ -104,32 +108,32 @@ export function InspectionResultPage() {
             <span className="card__icon">
               <MapPin size={20} />
             </span>
-            <h2 className="card__title">Место проверки</h2>
+            <h2 className="card__title">{t('result.place')}</h2>
             {isTest && <TestBadge />}
           </div>
           <div className="kv">
             <div className="kv__row">
-              <span className="kv__key">Населённый пункт</span>
-              <span className="kv__value">{i.city ?? 'Не определён'}</span>
+              <span className="kv__key">{t('result.city')}</span>
+              <span className="kv__value">{(isTest ? t('city.shymkent') : i.city) ?? t('result.cityUnknown')}</span>
             </div>
             <div className="kv__row">
-              <span className="kv__key">Координаты</span>
+              <span className="kv__key">{t('result.coords')}</span>
               <span className="kv__value mono">
                 {i.latitude !== null && i.longitude !== null ? formatCoords(i.latitude, i.longitude) : '—'}
               </span>
             </div>
             <div className="kv__row">
-              <span className="kv__key">Дата и время</span>
+              <span className="kv__key">{t('result.dateTime')}</span>
               <span className="kv__value">{formatFullDate(i.createdAt)}</span>
             </div>
             <div className="kv__row">
-              <span className="kv__key">Источник</span>
-              <span className="kv__value">{isTest ? 'Тестовый режим' : 'GPS браузера'}</span>
+              <span className="kv__key">{t('result.source')}</span>
+              <span className="kv__value">{isTest ? t('result.sourceTest') : t('result.sourceGps')}</span>
             </div>
           </div>
           {isTest && (
             <div style={{ marginTop: 10 }}>
-              <StatusMessage tone="warning">{TEST_WARNING}</StatusMessage>
+              <StatusMessage tone="warning">{testWarning()}</StatusMessage>
             </div>
           )}
           {i.latitude !== null && i.longitude !== null && (
@@ -138,11 +142,11 @@ export function InspectionResultPage() {
                 latitude={i.latitude}
                 longitude={i.longitude}
                 isTest={isTest}
-                label={i.city ?? undefined}
+                label={(isTest ? t('city.shymkent') : i.city) ?? undefined}
                 zoom={isTest ? 12 : 15}
               />
               <a className="ext-link" href={googleMapsUrl(i.latitude, i.longitude)} target="_blank" rel="noreferrer">
-                <ExternalLink size={16} /> Открыть в Google Maps
+                <ExternalLink size={16} /> {t('loc.openMaps')}
               </a>
             </div>
           )}
@@ -150,11 +154,11 @@ export function InspectionResultPage() {
 
         <div className="stack">
           <PrimaryButton size="lg" block icon={<Plus size={20} />} onClick={() => navigate('/inspection')}>
-            Новая проверка
+            {t('result.new')}
           </PrimaryButton>
           {!fromHistory && (
             <PrimaryButton variant="secondary" block icon={<History size={18} />} onClick={() => navigate('/history')}>
-              Перейти в историю
+              {t('result.toHistory')}
             </PrimaryButton>
           )}
           <PrimaryButton
@@ -164,17 +168,17 @@ export function InspectionResultPage() {
             onClick={() => setEditing(true)}
             disabled={!products.length}
           >
-            Изменить результат
+            {t('result.edit')}
           </PrimaryButton>
         </div>
       </div>
 
       {editing && (
         <ManualConfirmSheet
-          title="Изменить результат"
+          title={t('result.edit')}
           initial={i}
           catalog={products}
-          submitLabel="Сохранить"
+          submitLabel={t('common.save')}
           onCancel={() => setEditing(false)}
           onSubmit={(fields) => {
             update(buildInspection({ base: i, fields, catalog: products, location: null, confidence: null, manual: true, photo: null }));

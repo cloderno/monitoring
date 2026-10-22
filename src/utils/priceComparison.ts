@@ -1,16 +1,17 @@
 import type { ComparisonStatus } from '../types/inspection';
 import type { Product } from '../types/product';
+import { t, type MessageKey } from '../i18n';
 
 type BaseUnit = 'kg' | 'l' | 'pcs' | 'pack';
 
-/** Приводит подпись единицы («кг», «за 1 кг», «шт.», «упаковка») к базовой единице */
+/** Приводит подпись единицы («кг», «за 1 кг», «шт.», «дана», «упаковка», «қаптама») к базовой единице */
 export function normalizeUnit(text: string | null | undefined): BaseUnit | null {
   if (!text) return null;
-  const t = text.toLowerCase().replace(/ё/g, 'е').replace(/[.\s]|за|1/g, '');
-  if (/^(кг|kg|килограмм)/.test(t)) return 'kg';
-  if (/^(л|l)$|^литр/.test(t)) return 'l';
-  if (/^(шт|pcs|штук)/.test(t)) return 'pcs';
-  if (/^(уп|упаковк|пачк|pack)/.test(t)) return 'pack';
+  const u = text.toLowerCase().replace(/ё/g, 'е').replace(/[.\s]|за|үшін|1/g, '');
+  if (/^(кг|kg|килограмм)/.test(u)) return 'kg';
+  if (/^(л|l)$|^литр/.test(u)) return 'l';
+  if (/^(шт|pcs|штук|дана)/.test(u)) return 'pcs';
+  if (/^(уп|упаковк|пачк|pack|қаптама)/.test(u)) return 'pack';
   return null;
 }
 
@@ -20,7 +21,7 @@ export function parsePackageSize(text: string | null | undefined): { value: numb
   const m = text
     .toLowerCase()
     .replace(/ё/g, 'е')
-    .match(/(\d+(?:[.,]\d+)?)\s*(кг|kg|гр|г|g|мл|ml|л|l|шт|pcs)(?![a-zа-я])/);
+    .match(/(\d+(?:[.,]\d+)?)\s*(кг|kg|гр|г|g|мл|ml|л|l|шт|pcs|дана)(?![a-zа-яәіңғүұқөһ])/);
   if (!m) return null;
   const n = Number(m[1].replace(',', '.'));
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -54,7 +55,9 @@ export interface ComparisonResult {
 }
 
 const round = (n: number, digits = 0) => Math.round(n * 10 ** digits) / 10 ** digits;
-const unitLabel = { kg: 'кг', l: 'л', pcs: 'шт.', pack: 'упаковку' } as const;
+const UNIT_KEYS = { kg: 'unit.kg', l: 'unit.l', pcs: 'unit.pcs', pack: 'unit.packAcc' } as const satisfies Record<BaseUnit, MessageKey>;
+/** Название единицы на текущем языке: «кг», «л», «шт.» / «дана», «упаковку» / «қаптама» */
+const unitLabel = (u: BaseUnit) => t(UNIT_KEYS[u]);
 
 const notComparable = (note: string): ComparisonResult => ({
   comparablePrice: null,
@@ -76,8 +79,8 @@ export function comparePrice(
   packageSize: string | null,
   product: Product | null,
 ): ComparisonResult {
-  if (!product) return notComparable('Товар не найден в каталоге — выберите его вручную.');
-  if (shelfPrice === null || !(shelfPrice > 0)) return notComparable('Цена на ценнике не распознана.');
+  if (!product) return notComparable(t('note.noProduct'));
+  if (shelfPrice === null || !(shelfPrice > 0)) return notComparable(t('note.noPrice'));
 
   const target = normalizeUnit(product.unit);
   const given = normalizeUnit(priceUnit);
@@ -89,22 +92,22 @@ export function comparePrice(
       comparable = shelfPrice;
     } else if (given === 'pcs' || (priceUnit && !given)) {
       return notComparable(
-        `Цена указана за «${priceUnit}», а розничная — за 1 ${unitLabel[target]}. Прямое сравнение невозможно.`,
+        t('note.unitMismatch', { given: priceUnit ?? '', target: unitLabel(target) }),
       );
     } else {
       const pkg = parsePackageSize(packageSize);
       if (pkg && pkg.unit === target) {
         comparable = shelfPrice / pkg.value;
         if (pkg.value !== 1) {
-          note = `Цена пересчитана за 1 ${unitLabel[target]} исходя из фасовки ${packageSize}.`;
+          note = t('note.converted', { target: unitLabel(target), size: packageSize ?? '' });
         }
       } else if (!packageSize) {
         return notComparable(
-          `Розничная цена указана за 1 ${unitLabel[target]}, а фасовка товара неизвестна. Укажите фасовку для пересчёта.`,
+          t('note.noPackage', { target: unitLabel(target) }),
         );
       } else {
         return notComparable(
-          `Не удалось привести цену к 1 ${unitLabel[target]}: фасовка «${packageSize ?? '—'}» несовместима с единицей каталога.`,
+          t('note.badPackage', { target: unitLabel(target), size: packageSize ?? '—' }),
         );
       }
     }
@@ -112,7 +115,7 @@ export function comparePrice(
     // Справочная цена за штуку или упаковку
     if (given === 'kg' || given === 'l') {
       return notComparable(
-        `Цена указана за 1 ${unitLabel[given]}, а розничная — за ${unitLabel[target ?? 'pack']}. Прямое сравнение невозможно.`,
+        t('note.weightVsPack', { given: unitLabel(given), target: unitLabel(target ?? 'pack') }),
       );
     }
     comparable = shelfPrice;
@@ -121,7 +124,9 @@ export function comparePrice(
   const comparablePrice = round(comparable, 2);
   const difference = round(comparablePrice - product.retailPrice, 2);
   const percentage = round((difference / product.retailPrice) * 100, 1);
-  const markup = round(((comparablePrice - product.wholesalePrice) / product.wholesalePrice) * 100, 1);
+  // Оптовая цена может быть не задана (0) — тогда наценку не считаем
+  const markup =
+    product.wholesalePrice > 0 ? round(((comparablePrice - product.wholesalePrice) / product.wholesalePrice) * 100, 1) : null;
   return {
     comparablePrice,
     difference,
@@ -142,29 +147,32 @@ export function formatSigned(value: number, suffix: string): string {
   return `${sign}${Math.abs(value).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}${suffix}`;
 }
 
-export const COMPARISON_LABEL: Record<ComparisonStatus, string> = {
-  higher: 'Выше розничной цены',
-  lower: 'Ниже розничной цены',
-  equal: 'Совпадает с розничной ценой',
-  not_comparable: 'Сравнение невозможно',
-};
+const COMPARISON_KEYS = {
+  higher: 'cmp.higher',
+  lower: 'cmp.lower',
+  equal: 'cmp.equal',
+  not_comparable: 'cmp.notComparable',
+} as const satisfies Record<ComparisonStatus, MessageKey>;
 
-/** Подпись единицы цены по-русски: «за 1 кг», «за 1 л», «за 1 шт.», «за упаковку» */
+/** Итог сравнения на текущем языке: «Выше розничной цены» и т. п. */
+export const comparisonLabel = (status: ComparisonStatus) => t(COMPARISON_KEYS[status]);
+
+/** Подпись единицы цены на текущем языке: «за 1 кг», «за упаковку» / «1 кг үшін», «қаптама үшін» */
 export function perUnitLabel(unit: string | null | undefined): string {
   if (!unit) return '';
   const base = normalizeUnit(unit);
-  if (base === 'pack') return 'за упаковку';
-  if (base) return `за 1 ${unitLabel[base]}`;
-  return `за ${unit}`;
+  if (base === 'pack') return t('unit.perPack');
+  if (base) return t('unit.per1', { unit: unitLabel(base) });
+  return t('unit.per', { unit });
 }
 
-/** Разница цены на ценнике с ориентиром простыми словами: «на 61 ₸ дороже», «+7,2%» */
+/** Разница цены на ценнике с ориентиром простыми словами: «на 61 ₸ дороже» / «61 ₸ қымбат», «+7,2%» */
 export function describeDifference(price: number, reference: number): { text: string; percent: string; sign: -1 | 0 | 1 } {
   const diff = round(price - reference, 2);
   const percent = round((diff / reference) * 100, 1);
-  if (diff === 0) return { text: 'совпадает', percent: '0%', sign: 0 };
+  if (diff === 0) return { text: t('diff.same'), percent: '0%', sign: 0 };
   const amount = formatPrice(Math.abs(diff));
   return diff > 0
-    ? { text: `на ${amount} дороже`, percent: formatSigned(percent, '%'), sign: 1 }
-    : { text: `на ${amount} дешевле`, percent: formatSigned(percent, '%'), sign: -1 };
+    ? { text: t('diff.more', { amount }), percent: formatSigned(percent, '%'), sign: 1 }
+    : { text: t('diff.less', { amount }), percent: formatSigned(percent, '%'), sign: -1 };
 }

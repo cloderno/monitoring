@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 interface Props {
   title: string;
@@ -13,12 +14,13 @@ interface Props {
 
 export function AppHeader({ title, subtitle, backTo, showBack = true, right }: Props) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   return (
     <header className="app-header">
       {showBack && (
         <button
           className="icon-btn"
-          aria-label="Назад"
+          aria-label={t('common.back')}
           onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
         >
           <ChevronLeft size={24} />

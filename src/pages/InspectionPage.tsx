@@ -12,6 +12,7 @@ import { useAuth } from '../store/AuthContext';
 import { useDraft } from '../store/DraftContext';
 import { useHistory } from '../store/HistoryContext';
 import { recognizePhoto } from '../services/geminiService';
+import { useI18n } from '../i18n';
 import { describeError } from '../utils/errorMessages';
 import { preparePhoto } from '../utils/image';
 import {
@@ -24,7 +25,7 @@ import {
 type Phase =
   | { kind: 'form' }
   | { kind: 'analyzing' }
-  | { kind: 'error'; code: string; title: string; text: string }
+  | { kind: 'error'; err: unknown }
   | { kind: 'confirm'; fields: ProductFields; reasons: string[]; confidence: number | null; recognized: boolean };
 
 const EMPTY_FIELDS: ProductFields = {
@@ -37,17 +38,18 @@ const EMPTY_FIELDS: ProductFields = {
 };
 
 function GeoIndicator({ status, isTest }: { status: string; isTest: boolean }) {
+  const { t } = useI18n();
   const [cls, label] = isTest
-    ? ['test', 'Тест']
+    ? ['test', t('insp.geoTest')]
     : status === 'ready'
       ? ['ready', 'GPS']
       : status === 'loading'
-        ? ['loading', 'Поиск']
+        ? ['loading', t('insp.geoSearch')]
         : status === 'error'
-          ? ['error', 'Нет GPS']
-          : ['idle', 'Нет GPS'];
+          ? ['error', t('insp.geoNone')]
+          : ['idle', t('insp.geoNone')];
   return (
-    <span className="badge badge--neutral" title="Статус геолокации">
+    <span className="badge badge--neutral" title={t('insp.geoAria')}>
       <span className={`geo-dot geo-dot--${cls}`} /> {label}
     </span>
   );
@@ -55,6 +57,7 @@ function GeoIndicator({ status, isTest }: { status: string; isTest: boolean }) {
 
 export function InspectionPage() {
   const navigate = useNavigate();
+  const { t, lang } = useI18n();
   const { session, logout } = useAuth();
   const { add } = useHistory();
   const { geo, photo, setPhotoFile } = useDraft();
@@ -88,7 +91,7 @@ export function InspectionPage() {
     try {
       const prepared = await preparePhoto(photo.file, photo.url);
       thumbnailRef.current = prepared.thumbnail;
-      const result = await recognizePhoto(session.token, prepared, controller.signal);
+      const result = await recognizePhoto(session.token, prepared, lang, controller.signal);
       if (controller.signal.aborted) return;
       const { fields, match } = fieldsFromRecognition(result, products);
       const reasons = confirmationReasons(result, fields, products, match?.confidence ?? null);
@@ -99,12 +102,12 @@ export function InspectionPage() {
       }
     } catch (err) {
       if (controller.signal.aborted) return;
-      const d = describeError(err);
-      if (d.code === 'unauthorized') {
+      if (describeError(err).code === 'unauthorized') {
         logout();
         return;
       }
-      setPhase({ kind: 'error', ...d });
+      // Храним саму ошибку — текст берётся при отрисовке и переводится при смене языка
+      setPhase({ kind: 'error', err });
     }
   };
 
@@ -128,12 +131,13 @@ export function InspectionPage() {
   };
 
   const busy = phase.kind === 'analyzing';
+  const errorInfo = phase.kind === 'error' ? describeError(phase.err) : null;
 
   return (
     <>
       <AppHeader
-        title="Новая проверка"
-        subtitle="Сделайте фотографию товара и ценника"
+        title={t('insp.title')}
+        subtitle={t('insp.subtitle')}
         backTo="/"
         right={<GeoIndicator status={geo.status} isTest={geo.isTest} />}
       />
@@ -145,63 +149,63 @@ export function InspectionPage() {
         {catalogError && (
           <StatusMessage
             tone="error"
-            title="Каталог цен не загрузился"
+            title={t('insp.catalogError')}
             actions={
               <PrimaryButton size="sm" variant="secondary" onClick={retryCatalog}>
-                Повторить
+                {t('common.retry')}
               </PrimaryButton>
             }
           >
-            Без каталога сравнение цен невозможно.
+            {t('insp.catalogErrorText')}
           </StatusMessage>
         )}
 
         {photo && !location && (
           <StatusMessage
             tone="warning"
-            title="Нужно местоположение"
+            title={t('insp.needLocation')}
             actions={
               <>
                 {!geo.testMode && (
                   <PrimaryButton size="sm" variant="secondary" icon={<Crosshair size={16} />} onClick={geo.requestGps}>
-                    Определить
+                    {t('insp.detect')}
                   </PrimaryButton>
                 )}
                 <PrimaryButton size="sm" variant="secondary" icon={<FlaskConical size={16} />} onClick={() => geo.setTestMode(true)}>
-                  Тестовая геолокация
+                  {t('insp.testGeo')}
                 </PrimaryButton>
               </>
             }
           >
-            Каждая проверка фиксируется с координатами. Разрешите доступ к геолокации или включите тестовый режим.
+            {t('insp.needLocationText')}
           </StatusMessage>
         )}
 
-        {phase.kind === 'error' && (
+        {errorInfo && (
           <StatusMessage
             tone="error"
-            title={phase.title}
+            title={errorInfo.title}
             actions={
               <>
                 <PrimaryButton size="sm" variant="secondary" icon={<RotateCcw size={16} />} onClick={analyze} disabled={!canAnalyze}>
-                  Повторить
+                  {t('common.retry')}
                 </PrimaryButton>
                 <PrimaryButton size="sm" variant="secondary" icon={<PencilLine size={16} />} onClick={openManual} disabled={!location}>
-                  Ввести вручную
+                  {t('insp.manual')}
                 </PrimaryButton>
               </>
             }
           >
-            {phase.text}
+            {errorInfo.text}
           </StatusMessage>
         )}
       </div>
 
       <div className="screen__footer">
         <PrimaryButton size="lg" block icon={<Sparkles size={20} />} disabled={!canAnalyze} loading={busy} onClick={analyze}>
-          Распознать и проверить цену
+          {t('insp.analyze')}
         </PrimaryButton>
-        {!photo && <p className="small" style={{ textAlign: 'center' }}>Сначала добавьте фотографию товара с ценником</p>}
+        {!photo && <p className="small" style={{ textAlign: 'center' }}>{t('insp.addPhotoFirst')}</p>}
       </div>
 
       {phase.kind === 'analyzing' && (
@@ -213,23 +217,23 @@ export function InspectionPage() {
             </div>
           )}
           <div className="analyzing__title">
-            <span className="spinner" /> Анализируем фотографию…
+            <span className="spinner" /> {t('insp.analyzing')}
           </div>
-          <p className="muted">Определяем товар и цену на ценнике. Это может занять несколько секунд.</p>
+          <p className="muted">{t('insp.analyzingText')}</p>
           <PrimaryButton variant="secondary" onClick={cancelAnalysis} style={{ minWidth: 180, marginTop: 8 }}>
-            Отменить
+            {t('common.cancel')}
           </PrimaryButton>
         </div>
       )}
 
       {phase.kind === 'confirm' && (
         <ManualConfirmSheet
-          title={phase.recognized ? 'Проверьте данные' : 'Ввод данных вручную'}
+          title={phase.recognized ? t('insp.checkData') : t('insp.manualTitle')}
           initial={phase.fields}
           catalog={products}
           notice={
             phase.recognized ? (
-              <StatusMessage tone="warning" title="Нужно подтверждение">
+              <StatusMessage tone="warning" title={t('insp.needConfirm')}>
                 <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
                   {phase.reasons.map((r) => (
                     <li key={r}>{r}</li>
@@ -238,16 +242,16 @@ export function InspectionPage() {
               </StatusMessage>
             ) : (
               <StatusMessage tone="info">
-                Введите данные с ценника самостоятельно. Результат будет отмечен как введённый вручную.
+                {t('insp.manualInfo')}
               </StatusMessage>
             )
           }
-          submitLabel="Подтвердить и проверить"
+          submitLabel={t('insp.confirmSubmit')}
           onSubmit={(fields) => finish(fields, phase.confidence, true)}
           onCancel={() => setPhase({ kind: 'form' })}
           extraActions={
             <PrimaryButton variant="ghost" block icon={<Camera size={18} />} onClick={retake}>
-              Переснять фото
+              {t('insp.retake')}
             </PrimaryButton>
           }
         />

@@ -33,13 +33,15 @@ export function parseRecognition(raw: unknown): RecognitionResult {
 export async function recognizePhoto(
   token: string,
   image: { base64: string; mimeType: string },
+  /** Язык пояснений модели (поле message) */
+  lang: 'ru' | 'kk',
   signal?: AbortSignal,
 ): Promise<RecognitionResult> {
   const data = await apiRequest<{ result: unknown }>('/api/recognize', {
     method: 'POST',
     token,
     signal,
-    body: JSON.stringify({ image: image.base64, mimeType: image.mimeType }),
+    body: JSON.stringify({ image: image.base64, mimeType: image.mimeType, lang }),
   });
   return parseRecognition(data.result);
 }

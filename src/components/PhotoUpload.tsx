@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Camera, ImagePlus, Plus, RefreshCw, ScanLine, X } from 'lucide-react';
+import { useI18n } from '../i18n';
 import type { DraftPhoto } from '../store/DraftContext';
 import { validatePhoto } from '../utils/image';
 import { PrimaryButton } from './PrimaryButton';
@@ -24,6 +25,7 @@ const newPhotoId = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()
 
 /** Основная фотография товара с ценником (её распознаём) и дополнительные снимки (пока только показываются) */
 export function PhotoUpload({ photo, onChange, disabled }: Props) {
+  const { t } = useI18n();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const extraRef = useRef<HTMLInputElement>(null);
@@ -46,7 +48,7 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
     const free = MAX_EXTRA - extrasRef.current.length;
     const accepted = files.filter((f) => !validatePhoto(f)).slice(0, Math.max(0, free));
     if (files.length > accepted.length) {
-      setError(`Можно добавить не больше ${MAX_EXTRA} дополнительных фото в формате JPEG, PNG, WebP или HEIC.`);
+      setError(t('photo.tooMany', { n: MAX_EXTRA }));
     }
     if (accepted.length) {
       setExtras((list) => [...list, ...accepted.map((f) => ({ id: newPhotoId(), url: URL.createObjectURL(f) }))]);
@@ -86,8 +88,8 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
           <ScanLine size={20} />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="card__step">Шаг 2</div>
-          <h2 className="card__title">Фото товара вместе с ценником</h2>
+          <div className="card__step">{t('photo.step')}</div>
+          <h2 className="card__title">{t('photo.title')}</h2>
         </div>
       </div>
 
@@ -96,40 +98,40 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
           {imageBroken ? (
             <div className="map__fallback" style={{ background: '#eef2f8' }}>
               <b>{photo.file.name}</b>
-              <span>Предпросмотр этого формата недоступен в браузере, но фото будет отправлено на распознавание.</span>
+              <span>{t('photo.previewUnavailable')}</span>
             </div>
           ) : (
-            <img src={photo.url} alt="Фото товара с ценником" onError={() => setImageBroken(true)} />
+            <img src={photo.url} alt={t('photo.alt')} onError={() => setImageBroken(true)} />
           )}
           {!disabled && (
-            <button className="photo-preview__remove" aria-label="Удалить фото" onClick={() => onChange(null)}>
+            <button className="photo-preview__remove" aria-label={t('photo.remove')} onClick={() => onChange(null)}>
               <X size={20} />
             </button>
           )}
-          <span className="photo-preview__badge">Основное фото</span>
+          <span className="photo-preview__badge">{t('photo.main')}</span>
         </div>
       ) : (
         <div className="photo-drop">
           <span className="photo-drop__icon">
             <Camera size={28} />
           </span>
-          <b style={{ color: 'var(--color-text)' }}>Фото ещё не выбрано</b>
-          <span style={{ fontSize: 13 }}>Сделайте снимок или выберите его из галереи</span>
+          <b style={{ color: 'var(--color-text)' }}>{t('photo.empty')}</b>
+          <span style={{ fontSize: 13 }}>{t('photo.emptyHint')}</span>
         </div>
       )}
 
       {photo && (
         <div className="photo-strip">
-          <div className="photo-thumb photo-thumb--main" title="Основное фото — по нему выполняется распознавание">
+          <div className="photo-thumb photo-thumb--main" title={t('photo.mainTitle')}>
             {!imageBroken && <img src={photo.url} alt="" />}
             <span className="photo-thumb__label">1</span>
           </div>
           {extras.map((p, idx) => (
             <div key={p.id} className="photo-thumb">
-              <img src={p.url} alt={`Дополнительное фото ${idx + 1}`} />
+              <img src={p.url} alt={t('photo.extraAlt', { n: idx + 1 })} />
               <span className="photo-thumb__label">{idx + 2}</span>
               {!disabled && (
-                <button type="button" className="photo-thumb__remove" aria-label="Удалить фото" onClick={() => removeExtra(p.id)}>
+                <button type="button" className="photo-thumb__remove" aria-label={t('photo.remove')} onClick={() => removeExtra(p.id)}>
                   <X size={14} />
                 </button>
               )}
@@ -141,10 +143,10 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
               className="photo-thumb photo-thumb--add"
               onClick={() => extraRef.current?.click()}
               disabled={disabled}
-              aria-label="Добавить ещё фото"
+              aria-label={t('photo.addMoreAria')}
             >
               <Plus size={22} />
-              <span>Ещё фото</span>
+              <span>{t('photo.addMore')}</span>
             </button>
           )}
         </div>
@@ -157,7 +159,7 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
           onClick={() => cameraRef.current?.click()}
           disabled={disabled}
         >
-          {photo ? 'Переснять' : 'Сделать фото'}
+          {photo ? t('photo.retake') : t('photo.take')}
         </PrimaryButton>
         <PrimaryButton
           variant="secondary"
@@ -165,7 +167,7 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
           onClick={() => galleryRef.current?.click()}
           disabled={disabled}
         >
-          {photo ? 'Заменить' : 'Из галереи'}
+          {photo ? t('photo.replace') : t('photo.gallery')}
         </PrimaryButton>
       </div>
 
@@ -179,8 +181,8 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
           <StatusMessage tone="error">{error}</StatusMessage>
         ) : (
           <p className="small">
-            Постарайтесь, чтобы товар и его ценник полностью попадали в кадр. Цена должна быть хорошо видна.
-            {photo && ' Цена распознаётся по основному (первому) фото.'}
+            {t('photo.tip')}
+            {photo && t('photo.tipMain')}
           </p>
         )}
       </div>

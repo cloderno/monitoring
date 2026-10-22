@@ -1,5 +1,6 @@
 import type { Inspection, InspectionLocation, RecognitionResult } from '../types/inspection';
 import type { Product } from '../types/product';
+import { t } from '../i18n';
 import { comparePrice } from './priceComparison';
 import { matchProduct } from './productMatching';
 
@@ -36,12 +37,12 @@ export function fieldsFromRecognition(r: RecognitionResult, catalog: Product[]) 
 export function confirmationReasons(r: RecognitionResult, fields: ProductFields, catalog: Product[], matchConfidence: 'high' | 'low' | null) {
   const reasons: string[] = [];
   if (r.message) reasons.push(r.message);
-  if (r.shelf_price === null) reasons.push('Цена на ценнике не распознана — введите её вручную или переснимите фото.');
-  if (!r.product_name) reasons.push('Товар не распознан.');
-  if (r.confidence < 0.7) reasons.push(`Низкая уверенность распознавания (${Math.round(r.confidence * 100)}%).`);
-  if (r.product_name && !fields.productId) reasons.push('Товар не найден в каталоге — выберите его из списка.');
-  if (fields.productId && matchConfidence === 'low') reasons.push('Сопоставление с каталогом неоднозначно — проверьте выбранный товар.');
-  if (r.needs_confirmation && reasons.length === 0) reasons.push('Сервис распознавания просит проверить данные.');
+  if (r.shelf_price === null) reasons.push(t('reason.noPrice'));
+  if (!r.product_name) reasons.push(t('reason.noProduct'));
+  if (r.confidence < 0.7) reasons.push(t('reason.lowConfidence', { n: Math.round(r.confidence * 100) }));
+  if (r.product_name && !fields.productId) reasons.push(t('reason.notInCatalog'));
+  if (fields.productId && matchConfidence === 'low') reasons.push(t('reason.ambiguous'));
+  if (r.needs_confirmation && reasons.length === 0) reasons.push(t('reason.serviceAsks'));
   if (reasons.length === 0) {
     const product = catalog.find((p) => p.id === fields.productId) ?? null;
     const cmp = comparePrice(fields.shelfPrice, fields.priceUnit, fields.packageSize, product);
@@ -75,7 +76,7 @@ export function buildInspection(params: {
     shelfPrice: fields.shelfPrice,
     priceUnit: fields.priceUnit,
     expectedPrice: product?.retailPrice ?? null,
-    wholesalePrice: product?.wholesalePrice ?? null,
+    wholesalePrice: product?.wholesalePrice || null, // 0 — оптовая цена не задана
     markup: cmp.markup,
     expectedUnit: product?.unit ?? null,
     comparablePrice: cmp.comparablePrice,

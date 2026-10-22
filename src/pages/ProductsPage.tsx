@@ -5,6 +5,8 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
 import { useCatalog } from '../hooks/useCatalog';
 import { formatPrice, perUnitLabel } from '../utils/priceComparison';
+import { useI18n } from '../i18n';
+import { productLabel } from '../i18n/labels';
 import { normalizeText } from '../utils/productMatching';
 
 const EMOJI: Record<string, string> = {
@@ -31,18 +33,22 @@ const EMOJI: Record<string, string> = {
 
 export function ProductsPage() {
   const { catalog, products, error, retry } = useCatalog();
+  const { t, lang } = useI18n();
   const [query, setQuery] = useState('');
   const list = useMemo(() => {
     const q = normalizeText(query);
-    return products.filter((p) => !q || normalizeText(`${p.name} ${p.category}`).includes(q));
+    // Ищем и по русскому, и по казахскому названию
+    return products.filter(
+      (p) => !q || normalizeText(`${p.name} ${p.nameKk ?? ''} ${p.category} ${p.categoryKk ?? ''}`).includes(q),
+    );
   }, [products, query]);
 
   return (
     <>
-      <AppHeader title="Каталог цен СЗПТ" subtitle={catalog ? `${products.length} позиций` : undefined} />
+      <AppHeader title={t('catalog.title')} subtitle={catalog ? t('catalog.count', { n: products.length }) : undefined} />
       <div className="screen__body page-enter">
         <StatusMessage tone="warning">
-          Демонстрационный каталог цен. Оптовые закупочные и розничные цены условные и не являются официальными или предельными ценами.
+          {t('catalog.disclaimer')}
         </StatusMessage>
 
         <span className="field__control">
@@ -51,7 +57,7 @@ export function ProductsPage() {
           </span>
           <input
             className="input input--with-icon search"
-            placeholder="Поиск продукта…"
+            placeholder={t('catalog.search')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -60,10 +66,10 @@ export function ProductsPage() {
         {error && (
           <StatusMessage
             tone="error"
-            title="Не удалось загрузить каталог цен"
+            title={t('catalog.loadError')}
             actions={
               <PrimaryButton size="sm" variant="secondary" onClick={retry}>
-                Повторить
+                {t('common.retry')}
               </PrimaryButton>
             }
           />
@@ -72,8 +78,8 @@ export function ProductsPage() {
         {catalog && (
           <section className="card card--flush appear">
             <div className="product-row product-row--head small">
-              <span>Товар</span>
-              <span>Розница / опт. закупка</span>
+              <span>{t('catalog.headProduct')}</span>
+              <span>{t('catalog.headPrices')}</span>
             </div>
             {list.map((p) => (
               <div key={p.id} className="product-row">
@@ -81,19 +87,19 @@ export function ProductsPage() {
                   {EMOJI[p.id] ?? '🛒'}
                 </span>
                 <div className="product-row__main">
-                  <div className="product-row__name">{p.name}</div>
-                  <div className="small">{p.category}</div>
+                  <div className="product-row__name">{productLabel(p)}</div>
+                  <div className="small">{lang === 'kk' && p.categoryKk ? p.categoryKk : p.category}</div>
                 </div>
                 <div className="product-row__prices">
                   <div className="product-row__price">
                     {formatPrice(p.retailPrice)}
                     <span className="small"> {perUnitLabel(p.unit)}</span>
                   </div>
-                  <div className="small">опт {formatPrice(p.wholesalePrice)}</div>
+                  <div className="small">{t('catalog.wholesaleShort')} {p.wholesalePrice > 0 ? formatPrice(p.wholesalePrice) : '—'}</div>
                 </div>
               </div>
             ))}
-            {list.length === 0 && <p className="muted" style={{ padding: 20, textAlign: 'center' }}>Ничего не найдено</p>}
+            {list.length === 0 && <p className="muted" style={{ padding: 20, textAlign: 'center' }}>{t('common.nothingFound')}</p>}
           </section>
         )}
       </div>

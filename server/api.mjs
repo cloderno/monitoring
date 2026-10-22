@@ -120,7 +120,7 @@ export function createApiHandler(env = process.env) {
     if (!user) return sendJson(res, 401, { error: 'unauthorized' });
     if (!geminiKey) return sendJson(res, 503, { error: 'not_configured' });
 
-    const { image, mimeType } = await readJsonBody(req);
+    const { image, mimeType, lang } = await readJsonBody(req);
     if (typeof image !== 'string' || !image) return sendJson(res, 400, { error: 'no_image' });
     if (!ALLOWED_MIME.includes(mimeType)) return sendJson(res, 415, { error: 'unsupported_format' });
 
@@ -133,6 +133,7 @@ export function createApiHandler(env = process.env) {
         base64: image,
         products: loadProducts(),
         thinkingLevel: thinkingLevel || undefined,
+        lang: lang === 'kk' ? 'kk' : 'ru',
       });
       return sendJson(res, 200, { result });
     } catch (err) {

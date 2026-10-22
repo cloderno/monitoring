@@ -464,6 +464,11 @@ p {
   gap: 10px;
 }
 
+/* Два поля в строке: если одна подпись переносится на две строки, инпуты всё равно стоят на одной высоте */
+.btn-row--fields > .field {
+  justify-content: flex-end;
+}
+
 /* Количество + единица в одном поле (фасовка) */
 .input-group {
   display: flex;
@@ -798,6 +803,30 @@ select.input {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: 0 1px 3px rgba(15, 27, 51, 0.12);
+}
+
+/* Короткий переключатель языка на экране входа */
+.segmented--compact {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--color-border);
+}
+
+.segmented--compact button {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+}
+
+.login__lang {
+  display: flex;
+  justify-content: flex-end;
+  margin: -24px 0 8px;
 }
 
 .reveal {
@@ -1426,7 +1455,7 @@ select.input {
 
 .price-box__value {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   margin-top: 2px;
@@ -1458,8 +1487,10 @@ select.input {
   font-variant-numeric: tabular-nums;
 }
 
-.price-box__diff b {
+.price-box__diff b,
+.price-box__converted b {
   font-size: 13px;
+  font-weight: 600;
 }
 
 .price-box__diff--higher {
@@ -1533,6 +1564,7 @@ select.input {
 
 .delta__numbers b {
   font-size: 15px;
+  font-weight: 600;
 }
 
 /* ───────────── История ───────────── */
@@ -1605,7 +1637,7 @@ select.input {
 
 .history-item__delta {
   text-align: right;
-  font-weight: 800;
+  font-weight: 500;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -1693,7 +1725,7 @@ select.input {
 }
 
 .product-row__price {
-  font-weight: 700;
+  font-weight: 500;
   font-size: 14.5px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

@@ -1,27 +1,31 @@
 import { Crosshair, ExternalLink, MapPin } from 'lucide-react';
 import type { GeolocationState } from '../hooks/useGeolocation';
+import { t, useI18n, type MessageKey } from '../i18n';
 import { formatCoords, googleMapsUrl } from '../services/geolocationService';
 import { LocationMap } from './LocationMap';
 import { PrimaryButton } from './PrimaryButton';
 import { StatusMessage } from './StatusMessage';
 
-const GEO_ERRORS: Record<string, string> = {
-  denied: 'Нет доступа к геолокации. Разрешите доступ в настройках браузера или включите тестовый режим.',
-  unavailable: 'Не удалось определить местоположение. Проверьте, что GPS включён, и повторите попытку.',
-  timeout: 'Определение местоположения заняло слишком много времени. Повторите попытку или включите тестовый режим.',
-  unsupported: 'Браузер не поддерживает геолокацию. Включите тестовый режим.',
-  insecure: 'Геолокация доступна только по защищённому соединению (HTTPS). Откройте приложение по HTTPS или включите тестовый режим.',
+const GEO_ERRORS: Record<string, MessageKey> = {
+  denied: 'geoErr.denied',
+  unavailable: 'geoErr.unavailable',
+  timeout: 'geoErr.timeout',
+  unsupported: 'geoErr.unsupported',
+  insecure: 'geoErr.insecure',
 };
 
-export const TEST_WARNING = 'Используется тестовое местоположение. Эти координаты не отражают фактическое положение устройства.';
+/** Предупреждение о тестовом местоположении на текущем языке */
+export const testWarning = () => t('loc.testWarning');
 
 export function TestBadge() {
-  return <span className="badge badge--test">ТЕСТОВЫЙ РЕЖИМ</span>;
+  const { t } = useI18n();
+  return <span className="badge badge--test">{t('loc.testBadge')}</span>;
 }
 
 /** Карточка «Место проверки» на экране проверки: реальная геолокация или тестовая точка */
 export function LocationCard({ geo }: { geo: GeolocationState }) {
   const { location, status, error, isTest, testMode, testChoice } = geo;
+  const { t } = useI18n();
 
   return (
     <section className="card appear">
@@ -30,8 +34,8 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
           <MapPin size={20} />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="card__step">Шаг 1</div>
-          <h2 className="card__title">Место проверки</h2>
+          <div className="card__step">{t('loc.step')}</div>
+          <h2 className="card__title">{t('loc.title')}</h2>
         </div>
         {isTest && <TestBadge />}
       </div>
@@ -40,26 +44,26 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
         {location ? (
           <div className="location-head">
             <div>
-              <div className="location-city">{location.city ?? (isTest ? '' : 'Населённый пункт не определён')}</div>
+              <div className="location-city">{(isTest ? t('city.shymkent') : location.city) ?? t('loc.cityUnknown')}</div>
               <div className="location-coords">{formatCoords(location.latitude, location.longitude)}</div>
               <div className="small">
                 {isTest
-                  ? 'Источник: тестовый режим'
-                  : `Источник: GPS браузера${location.accuracy ? ` · точность ±${location.accuracy} м` : ''}`}
+                  ? t('loc.sourceTest')
+                  : `${t('loc.sourceGps')}${location.accuracy ? t('loc.accuracy', { n: location.accuracy }) : ''}`}
               </div>
             </div>
             <span className={`badge ${isTest ? 'badge--warning' : 'badge--success'}`}>
-              {isTest ? 'Тест' : 'Определено'}
+              {isTest ? t('loc.badgeTest') : t('loc.badgeDetected')}
             </span>
           </div>
         ) : status === 'loading' ? (
           <div className="inline muted">
-            <span className="spinner" style={{ color: 'var(--color-primary)' }} /> Определяем местоположение…
+            <span className="spinner" style={{ color: 'var(--color-primary)' }} /> {t('loc.detecting')}
           </div>
         ) : status === 'error' && error ? (
-          <StatusMessage tone="error">{GEO_ERRORS[error]}</StatusMessage>
+          <StatusMessage tone="error">{t(GEO_ERRORS[error] ?? 'geoErr.unavailable')}</StatusMessage>
         ) : (
-          <div className="muted">Местоположение не определено</div>
+          <div className="muted">{t('loc.notDetected')}</div>
         )}
 
         {location && (
@@ -68,7 +72,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
               latitude={location.latitude}
               longitude={location.longitude}
               isTest={isTest}
-              label={location.city ?? undefined}
+              label={(isTest ? t('city.shymkent') : location.city) ?? undefined}
               zoom={isTest ? 12 : 15}
             />
             <a
@@ -77,7 +81,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
               target="_blank"
               rel="noreferrer"
             >
-              <ExternalLink size={16} /> Открыть в Google Maps
+              <ExternalLink size={16} /> {t('loc.openMaps')}
             </a>
           </>
         )}
@@ -90,14 +94,14 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
             icon={<Crosshair size={18} />}
             onClick={geo.requestGps}
           >
-            {location ? 'Обновить местоположение' : 'Определить местоположение'}
+            {location ? t('loc.update') : t('loc.detect')}
           </PrimaryButton>
         )}
 
         <label className="switch-row">
           <span>
-            <b style={{ fontSize: 14.5 }}>Тестовая геолокация</b>
-            <div className="small">Для демонстрации без реального GPS</div>
+            <b style={{ fontSize: 14.5 }}>{t('loc.testTitle')}</b>
+            <div className="small">{t('loc.testHint')}</div>
           </span>
           <span className="switch">
             <input
@@ -112,7 +116,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
 
         {testMode && (
           <div className="stack reveal">
-            <div className="segmented" role="radiogroup" aria-label="Источник местоположения">
+            <div className="segmented" role="radiogroup" aria-label={t('loc.sourceAria')}>
               <button
                 type="button"
                 role="radio"
@@ -120,7 +124,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
                 className={testChoice === 'real' ? 'is-active' : ''}
                 onClick={() => geo.setTestChoice('real')}
               >
-                Реальное местоположение
+                {t('loc.real')}
               </button>
               <button
                 type="button"
@@ -129,10 +133,10 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
                 className={testChoice === 'shymkent' ? 'is-active' : ''}
                 onClick={() => geo.setTestChoice('shymkent')}
               >
-                Шымкент (тест)
+                {t('loc.shymkentTest')}
               </button>
             </div>
-            {isTest && <StatusMessage tone="warning">{TEST_WARNING}</StatusMessage>}
+            {isTest && <StatusMessage tone="warning">{testWarning()}</StatusMessage>}
           </div>
         )}
       </div>

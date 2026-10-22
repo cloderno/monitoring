@@ -7,7 +7,7 @@ import { InspectionPage } from '../pages/InspectionPage';
 import { InspectionResultPage } from '../pages/InspectionResultPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ProductsPage } from '../pages/ProductsPage';
-import { ProfilePage } from '../pages/ProfilePage';
+import { SettingsPage } from '../pages/SettingsPage';
 import { WelcomePage } from '../pages/WelcomePage';
 
 /** Доступ только после входа; контекст проверки живёт, пока пользователь в системе */
@@ -52,7 +52,9 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <WelcomePage /> },
           { path: '/history', element: <HistoryPage /> },
-          { path: '/profile', element: <ProfilePage /> },
+          { path: '/settings', element: <SettingsPage /> },
+          // старый адрес экрана «Профиль»
+          { path: '/profile', element: <Navigate to="/settings" replace /> },
         ],
       },
       {

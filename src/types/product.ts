@@ -1,7 +1,10 @@
 export interface Product {
   id: string;
   name: string;
+  /** Название на казахском */
+  nameKk?: string;
   category: string;
+  categoryKk?: string;
   /** Оптовая закупочная цена */
   wholesalePrice: number;
   /** Розничная цена */

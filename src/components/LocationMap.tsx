@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPinOff } from 'lucide-react';
+import { useI18n } from '../i18n';
 import { formatCoords } from '../services/geolocationService';
 
 interface Props {
@@ -23,6 +24,7 @@ const pinIcon = (isTest: boolean) =>
 
 /** Интерактивная карта Leaflet + OpenStreetMap с маркером места проверки */
 export function LocationMap({ latitude, longitude, isTest = false, label, zoom = 14 }: Props) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -80,12 +82,12 @@ export function LocationMap({ latitude, longitude, isTest = false, label, zoom =
 
   return (
     <div className="map">
-      <div ref={containerRef} className="map__canvas" aria-label="Карта места проверки" />
+      <div ref={containerRef} className="map__canvas" aria-label={t('map.aria')} />
       {failed && (
         <div className="map__fallback">
           <MapPinOff size={22} />
-          <b>Карта не загрузилась</b>
-          <span>Проверьте подключение к интернету. Координаты: {formatCoords(latitude, longitude)}</span>
+          <b>{t('map.failed')}</b>
+          <span>{t('map.failedText', { coords: formatCoords(latitude, longitude) })}</span>
         </div>
       )}
     </div>

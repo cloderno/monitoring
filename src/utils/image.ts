@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
@@ -5,10 +7,10 @@ const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/
 export function validatePhoto(file: File): string | null {
   const type = file.type || (/\.(heic|heif)$/i.test(file.name) ? 'image/heic' : '');
   if (!ACCEPTED.includes(type)) {
-    return 'Формат не поддерживается. Используйте фотографию в формате JPEG, PNG, WebP или HEIC.';
+    return t('photo.errFormat');
   }
   if (file.size > MAX_PHOTO_BYTES) {
-    return 'Файл слишком большой (более 15 МБ). Сделайте снимок с меньшим разрешением или выберите другое фото.';
+    return t('photo.errSize');
   }
   return null;
 }

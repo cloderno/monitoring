@@ -3,16 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ClipboardList, ImageOff, Search } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { useCatalog } from '../hooks/useCatalog';
+import { dateLocale, useI18n } from '../i18n';
+import { inspectionProductLabel } from '../i18n/labels';
 import { useHistory } from '../store/HistoryContext';
 import { formatPrice, formatSigned } from '../utils/priceComparison';
 import { normalizeText } from '../utils/productMatching';
 import { StatusBadge } from './InspectionResultPage';
 
 const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+  new Date(iso).toLocaleString(dateLocale(), { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 export function HistoryPage() {
   const { items } = useHistory();
+  const { t } = useI18n();
+  const { products } = useCatalog();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [order, setOrder] = useState<'desc' | 'asc'>('desc');
@@ -20,23 +25,23 @@ export function HistoryPage() {
   const list = useMemo(() => {
     const q = normalizeText(query);
     return items
-      .filter((i) => !q || normalizeText(`${i.productName ?? ''} ${i.brand ?? ''}`).includes(q))
+      .filter((i) => !q || normalizeText(`${i.productName ?? ''} ${inspectionProductLabel(i.productName, i.productId, products) ?? ''} ${i.brand ?? ''}`).includes(q))
       .sort((a, b) => (order === 'desc' ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt)));
-  }, [items, query, order]);
+  }, [items, query, order, products]);
 
   return (
     <>
-      <AppHeader title="История проверок" subtitle={`Всего: ${items.length}`} showBack={false} />
+      <AppHeader title={t('history.title')} subtitle={t('history.total', { n: items.length })} showBack={false} />
 
       {items.length === 0 ? (
         <div className="empty page-enter">
           <div className="empty__icon">
             <ClipboardList size={32} />
           </div>
-          <div className="empty__title">Проверок пока нет</div>
-          <p>Результаты проверок будут появляться здесь.</p>
+          <div className="empty__title">{t('history.emptyTitle')}</div>
+          <p>{t('history.emptyText')}</p>
           <PrimaryButton style={{ marginTop: 8 }} onClick={() => navigate('/inspection')}>
-            Начать проверку
+            {t('welcome.start')}
           </PrimaryButton>
         </div>
       ) : (
@@ -48,24 +53,24 @@ export function HistoryPage() {
               </span>
               <input
                 className="input input--with-icon search"
-                placeholder="Поиск по товару"
+                placeholder={t('history.search')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                aria-label="Фильтр по товару"
+                aria-label={t('history.filterAria')}
               />
             </span>
             <select
               className="input"
               value={order}
               onChange={(e) => setOrder(e.target.value as 'desc' | 'asc')}
-              aria-label="Сортировка по дате"
+              aria-label={t('history.sortAria')}
             >
-              <option value="desc">Сначала новые</option>
-              <option value="asc">Сначала старые</option>
+              <option value="desc">{t('history.newest')}</option>
+              <option value="asc">{t('history.oldest')}</option>
             </select>
           </div>
 
-          {list.length === 0 && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>Ничего не найдено</p>}
+          {list.length === 0 && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>{t('common.nothingFound')}</p>}
 
           {list.map((i, idx) => (
             <Link
@@ -82,15 +87,15 @@ export function HistoryPage() {
                 </span>
               )}
               <div className="history-item__main">
-                <div className="history-item__name">{i.productName ?? 'Товар не распознан'}</div>
+                <div className="history-item__name">{inspectionProductLabel(i.productName, i.productId, products) ?? t('product.unrecognized')}</div>
                 <div className="history-item__prices">
-                  {formatPrice(i.shelfPrice)} · розн. {formatPrice(i.expectedPrice)}
+                  {formatPrice(i.shelfPrice)} · {t('history.retailShort')} {formatPrice(i.expectedPrice)}
                 </div>
                 <div className="history-item__meta">
                   <span>{formatDate(i.createdAt)}</span>
                   <span>·</span>
-                  <span>{i.city ?? 'Место не определено'}</span>
-                  {i.locationSource === 'test' && <span className="badge badge--warning" style={{ padding: '1px 6px' }}>тест</span>}
+                  <span>{(i.locationSource === 'test' ? t('city.shymkent') : i.city) ?? t('history.noPlace')}</span>
+                  {i.locationSource === 'test' && <span className="badge badge--warning" style={{ padding: '1px 6px' }}>{t('history.testShort')}</span>}
                 </div>
               </div>
               <div className="history-item__delta">
@@ -107,7 +112,7 @@ export function HistoryPage() {
           ))}
 
           <p className="small" style={{ textAlign: 'center', marginTop: 8 }}>
-            Демонстрационная история хранится только в этом браузере и не синхронизируется между устройствами.
+            {t('history.footer')}
           </p>
         </div>
       )}

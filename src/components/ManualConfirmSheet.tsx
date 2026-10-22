@@ -1,8 +1,10 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { t, useI18n, type MessageKey } from '../i18n';
+import { productLabel } from '../i18n/labels';
 import type { Product } from '../types/product';
 import type { ProductFields } from '../utils/inspection';
-import { COMPARISON_LABEL, comparePrice, describeDifference, formatPrice, normalizeUnit, perUnitLabel } from '../utils/priceComparison';
+import { comparePrice, comparisonLabel, describeDifference, formatPrice, normalizeUnit, perUnitLabel } from '../utils/priceComparison';
 import { PrimaryButton } from './PrimaryButton';
 
 interface Props {
@@ -16,17 +18,19 @@ interface Props {
   extraActions?: ReactNode;
 }
 
+// Значения хранятся по-русски (их понимает разбор единиц), подписи — на текущем языке
 const PRICE_UNITS = [
-  { value: '', label: 'За товар / упаковку' },
-  { value: 'кг', label: 'За 1 кг' },
-  { value: 'л', label: 'За 1 л' },
-  { value: 'шт.', label: 'За 1 шт.' },
+  { value: '', label: () => t('sheet.perItem') },
+  { value: 'кг', label: () => t('sheet.per1', { unit: t('unit.kg') }) },
+  { value: 'л', label: () => t('sheet.per1', { unit: t('unit.l') }) },
+  { value: 'шт.', label: () => t('sheet.per1', { unit: t('unit.pcs') }) },
 ];
 
 const clean = (s: string) => s.trim() || null;
 
 const PACKAGE_UNITS = ['г', 'кг', 'мл', 'л', 'шт.'] as const;
 type PackageUnit = (typeof PACKAGE_UNITS)[number];
+const PACKAGE_UNIT_KEYS: Record<PackageUnit, MessageKey> = { г: 'unit.g', кг: 'unit.kg', мл: 'unit.ml', л: 'unit.l', 'шт.': 'unit.pcs' };
 
 /** Единица фасовки по умолчанию для выбранного товара (масло — литры, яйца — штуки и т. д.) */
 function defaultPackageUnit(product: Product | null): PackageUnit {
@@ -38,19 +42,21 @@ function defaultPackageUnit(product: Product | null): PackageUnit {
   return 'г';
 }
 
-/** Разбирает распознанную фасовку («10 шт», «0,9 л», «450 гр») на количество и единицу */
+/** Разбирает распознанную фасовку («10 шт», «10 дана», «0,9 л», «450 гр») на количество и единицу */
 function splitPackageSize(text: string | null): { amount: string; unit: PackageUnit | null } {
   if (!text) return { amount: '', unit: null };
-  const t = text.toLowerCase().replace(/ё/g, 'е');
+  const lower = text.toLowerCase().replace(/ё/g, 'е');
   // Сначала число с единицей («С1 10 шт» → 10 шт), иначе просто первое число
-  const m = t.match(/(\d+(?:[.,]\d+)?)\s*(кг|гр|г|мл|л|шт)(?![a-zа-я])/) ?? t.match(/(\d+(?:[.,]\d+)?)()/);
+  const m =
+    lower.match(/(\d+(?:[.,]\d+)?)\s*(кг|гр|г|мл|л|шт|дана)(?![a-zа-яәіңғүұқөһ])/) ?? lower.match(/(\d+(?:[.,]\d+)?)()/);
   if (!m) return { amount: '', unit: null };
-  const unit = m[2] === 'гр' ? 'г' : m[2] === 'шт' ? 'шт.' : ((m[2] as PackageUnit) || null);
+  const unit = m[2] === 'гр' ? 'г' : m[2] === 'шт' || m[2] === 'дана' ? 'шт.' : ((m[2] as PackageUnit) || null);
   return { amount: m[1].replace('.', ','), unit };
 }
 
 /** Форма ручного подтверждения или исправления распознанных данных (нижний лист) */
-export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabel = 'Продолжить', onSubmit, onCancel, extraActions }: Props) {
+export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabel, onSubmit, onCancel, extraActions }: Props) {
+  const { lang } = useI18n();
   const [productId, setProductId] = useState(initial.productId ?? '');
   const [productName, setProductName] = useState(initial.productName ?? '');
   const [price, setPrice] = useState(initial.shelfPrice !== null ? String(initial.shelfPrice) : '');
@@ -70,7 +76,9 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
 
   const preview = useMemo(
     () => (priceValid && product ? comparePrice(priceNumber, clean(priceUnit), clean(packageSize), product) : null),
-    [priceValid, priceNumber, priceUnit, packageSize, product],
+    // lang — чтобы пояснение пересобралось на новом языке
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [priceValid, priceNumber, priceUnit, packageSize, product, lang],
   );
 
   // Для товаров «за кг / за л» фасовка нужна, чтобы пересчитать цену упаковки
@@ -97,7 +105,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
         <div className="sheet__grip" />
         <div className="sheet__head">
           <h2 className="sheet__title">{title}</h2>
-          <button type="button" className="icon-btn" aria-label="Закрыть" onClick={onCancel}>
+          <button type="button" className="icon-btn" aria-label={t('common.close')} onClick={onCancel}>
             <X size={22} />
           </button>
         </div>
@@ -105,30 +113,30 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
         {notice}
 
         <label className="field">
-          <span className="field__label">Товар из каталога</span>
+          <span className="field__label">{t('sheet.product')}</span>
           <select
             className={`input${touched && !product ? ' is-invalid' : ''}`}
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
           >
-            <option value="">— Выберите товар —</option>
+            <option value="">{t('sheet.chooseProduct')}</option>
             {catalog.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} · розн. {formatPrice(p.retailPrice)} {perUnitLabel(p.unit)}
+                {productLabel(p)} · {t('sheet.retailShort')} {formatPrice(p.retailPrice)} {perUnitLabel(p.unit)}
               </option>
             ))}
           </select>
-          {touched && !product && <span className="field__hint" style={{ color: 'var(--color-danger)' }}>Выберите товар для сравнения</span>}
+          {touched && !product && <span className="field__hint" style={{ color: 'var(--color-danger)' }}>{t('sheet.chooseProductHint')}</span>}
         </label>
 
         <label className="field">
-          <span className="field__label">Название товара</span>
-          <input className="input" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Например, Рожки «Макфа»" />
+          <span className="field__label">{t('sheet.productName')}</span>
+          <input className="input" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder={t('sheet.productNamePlaceholder')} />
         </label>
 
-        <div className="btn-row">
+        <div className="btn-row btn-row--fields">
           <label className="field">
-            <span className="field__label">Цена на ценнике, ₸</span>
+            <span className="field__label">{t('sheet.price')}</span>
             <input
               className={`input${touched && !priceValid ? ' is-invalid' : ''}`}
               inputMode="decimal"
@@ -138,7 +146,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
             />
           </label>
           <label className="field">
-            <span className="field__label">Фасовка</span>
+            <span className="field__label">{t('sheet.package')}</span>
             <span className="input-group">
               <input
                 className={`input${packageNeeded && priceValid ? ' is-invalid' : ''}`}
@@ -146,17 +154,17 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
                 value={packageAmount}
                 onChange={(e) => setPackageAmount(e.target.value)}
                 placeholder="0"
-                aria-label="Количество в упаковке"
+                aria-label={t('sheet.packageAmountAria')}
               />
               <select
                 className="input input-group__unit"
                 value={packageUnit}
                 onChange={(e) => setPackageUnitChoice(e.target.value as PackageUnit)}
-                aria-label="Единица фасовки"
+                aria-label={t('sheet.packageUnitAria')}
               >
                 {PACKAGE_UNITS.map((u) => (
                   <option key={u} value={u}>
-                    {u}
+                    {t(PACKAGE_UNIT_KEYS[u])}
                   </option>
                 ))}
               </select>
@@ -165,40 +173,44 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
         </div>
         <span className="field__hint" style={{ marginTop: -8 }}>
           {perWeightUnit === 'kg' || perWeightUnit === 'l'
-            ? `Фасовка — масса или объём с упаковки (например, 0,9 и ${perWeightUnit === 'l' ? 'л' : 'кг'}). Нужна, чтобы пересчитать цену за 1 ${perWeightUnit === 'l' ? 'л' : 'кг'}.`
-            : 'Фасовка — количество с упаковки, единица выбирается справа (например, 10 и шт.).'}
+            ? t('sheet.hintWeight', { unit: t(perWeightUnit === 'l' ? 'unit.l' : 'unit.kg') })
+            : t('sheet.hintCount', { pcs: t('unit.pcs') })}
         </span>
         {touched && !priceValid && (
           <span className="field__hint" style={{ color: 'var(--color-danger)', marginTop: -8 }}>
-            Укажите цену с ценника — положительное число
+            {t('sheet.priceInvalid')}
           </span>
         )}
 
         <label className="field">
-          <span className="field__label">Цена указана</span>
+          <span className="field__label">{t('sheet.priceUnit')}</span>
           <select className="input" value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)}>
             {PRICE_UNITS.map((u) => (
               <option key={u.value} value={u.value}>
-                {u.label}
+                {u.label()}
               </option>
             ))}
-            {!PRICE_UNITS.some((u) => u.value === priceUnit) && <option value={priceUnit}>За {priceUnit}</option>}
+            {!PRICE_UNITS.some((u) => u.value === priceUnit) && <option value={priceUnit}>{t('sheet.perOther', { unit: priceUnit })}</option>}
           </select>
         </label>
 
         {preview && (
           <div className={`delta delta--${preview.comparison}`} style={{ marginTop: 0 }}>
             <div className="delta__main">
-              <div className="delta__status">{COMPARISON_LABEL[preview.comparison]}</div>
+              <div className="delta__status">{comparisonLabel(preview.comparison)}</div>
               <div className="delta__numbers">
                 {preview.comparablePrice !== null ? (
                   <>
-                    Розница {formatPrice(product!.retailPrice)} {perUnitLabel(product!.unit)}: ценник{' '}
+                    {t('sheet.previewRetail', { price: formatPrice(product!.retailPrice), per: perUnitLabel(product!.unit) })}{' '}
                     <b>{describeDifference(preview.comparablePrice, product!.retailPrice).text}</b> (
                     {describeDifference(preview.comparablePrice, product!.retailPrice).percent})
-                    <br />
-                    Опт. закупка {formatPrice(product!.wholesalePrice)}: наценка{' '}
-                    <b>{preview.markup?.toLocaleString('ru-RU')}%</b>
+                    {preview.markup !== null && (
+                      <>
+                        <br />
+                        {t('sheet.previewWholesale', { price: formatPrice(product!.wholesalePrice) })}{' '}
+                        <b>{preview.markup.toLocaleString('ru-RU')}%</b>
+                      </>
+                    )}
                   </>
                 ) : (
                   preview.note
@@ -209,7 +221,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
         )}
 
         <PrimaryButton type="submit" size="lg" block>
-          {submitLabel}
+          {submitLabel ?? t('common.continue')}
         </PrimaryButton>
         {extraActions}
       </form>
