@@ -37,7 +37,7 @@ export function fieldsFromRecognition(r: RecognitionResult, catalog: Product[]) 
 }
 
 /** Причины, по которым результат требует проверки человеком (пустой список — можно сразу показывать результат) */
-export function confirmationReasons(r: RecognitionResult, fields: ProductFields, catalog: Product[], matchConfidence: 'high' | 'low' | null) {
+export function confirmationReasons(r: RecognitionResult, fields: ProductFields, matchConfidence: 'high' | 'low' | null) {
   const reasons: string[] = [];
   if (r.message) reasons.push(r.message);
   if (r.shelf_price === null) reasons.push(t('reason.noPrice'));
@@ -46,12 +46,14 @@ export function confirmationReasons(r: RecognitionResult, fields: ProductFields,
   if (r.product_name && !fields.productId) reasons.push(t('reason.notInCatalog'));
   if (fields.productId && matchConfidence === 'low') reasons.push(t('reason.ambiguous'));
   if (r.needs_confirmation && reasons.length === 0) reasons.push(t('reason.serviceAsks'));
-  if (reasons.length === 0) {
-    const product = catalog.find((p) => p.id === fields.productId) ?? null;
-    const cmp = comparePrice(fields.shelfPrice, fields.priceUnit, fields.packageSize, product);
-    if (cmp.comparison === 'not_comparable' && cmp.note) reasons.push(cmp.note);
-  }
   return [...new Set(reasons)];
+}
+
+/** Цену не удалось сравнить (например, неизвестна фасовка) — данные надо проверить, пояснение показывает сама форма */
+export function needsComparisonFix(fields: ProductFields, catalog: Product[]) {
+  const product = catalog.find((p) => p.id === fields.productId) ?? null;
+  if (!product) return false;
+  return comparePrice(fields.shelfPrice, fields.priceUnit, fields.packageSize, product).comparison === 'not_comparable';
 }
 
 export function buildInspection(params: {

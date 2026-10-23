@@ -18,6 +18,7 @@ import { preparePhoto } from '../utils/image';
 import {
   buildInspection,
   confirmationReasons,
+  needsComparisonFix,
   fieldsFromRecognition,
   type ProductFields,
 } from '../utils/inspection';
@@ -111,8 +112,8 @@ export function InspectionPage() {
       const result = await recognizePhoto(session.token, prepared, lang, controller.signal);
       if (controller.signal.aborted) return;
       const { fields, match } = fieldsFromRecognition(result, products);
-      const reasons = confirmationReasons(result, fields, products, match?.confidence ?? null);
-      if (reasons.length === 0) {
+      const reasons = confirmationReasons(result, fields, match?.confidence ?? null);
+      if (reasons.length === 0 && !needsComparisonFix(fields, products)) {
         finish(fields, result.confidence, false);
       } else {
         setPhase({ kind: 'confirm', fields, reasons, confidence: result.confidence, recognized: true });
@@ -247,6 +248,8 @@ export function InspectionPage() {
           initialStore={store}
           notice={
             phase.recognized ? (
+              // Причину «сравнение невозможно» здесь не повторяем — она показана внизу формы
+              phase.reasons.length > 0 && (
               <StatusMessage tone="warning" title={t('insp.needConfirm')}>
                 <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
                   {phase.reasons.map((r) => (
@@ -254,6 +257,7 @@ export function InspectionPage() {
                   ))}
                 </ul>
               </StatusMessage>
+              )
             ) : (
               <StatusMessage tone="info">
                 {t('insp.manualInfo')}
