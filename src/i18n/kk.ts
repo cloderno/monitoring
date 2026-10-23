@@ -190,9 +190,9 @@ export const kk: Record<MessageKey, string> = {
   'catalog.headProduct': 'Тауар',
   'catalog.headPrices': 'Бөлшек / көтерме сатып алу',
   'catalog.wholesaleShort': 'көтерме',
-  'store.title': 'Сауда нүктесі',
-  'store.choose': 'Нүктені таңдаңыз',
-  'store.required': 'Сауда нүктесін таңдаңыз',
+  'store.title': 'Сауда орны',
+  'store.choose': 'Сауда орнын таңдаңыз',
+  'store.required': 'Сауда орнын таңдаңыз',
   'store.none': 'Көрсетілмеген',
 
   // Сравнение цен
