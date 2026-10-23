@@ -3,14 +3,18 @@ import { X } from 'lucide-react';
 import { t, useI18n, type MessageKey } from '../i18n';
 import { productLabel } from '../i18n/labels';
 import type { Product } from '../types/product';
+import type { Store } from '../types/store';
 import type { ProductFields } from '../utils/inspection';
 import { comparePrice, comparisonLabel, describeDifference, formatPrice, normalizeUnit, perUnitLabel } from '../utils/priceComparison';
 import { PrimaryButton } from './PrimaryButton';
+import { StoreSelect } from './StorePicker';
 
 interface Props {
   title: string;
   initial: ProductFields;
   catalog: Product[];
+  stores: Store[];
+  initialStore: Store | null;
   notice?: ReactNode;
   submitLabel?: string;
   onSubmit: (fields: ProductFields) => void;
@@ -55,8 +59,9 @@ function splitPackageSize(text: string | null): { amount: string; unit: PackageU
 }
 
 /** Форма ручного подтверждения или исправления распознанных данных (нижний лист) */
-export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabel, onSubmit, onCancel, extraActions }: Props) {
+export function ManualConfirmSheet({ title, initial, catalog, stores, initialStore, notice, submitLabel, onSubmit, onCancel, extraActions }: Props) {
   const { lang } = useI18n();
+  const [store, setStore] = useState<Store | null>(initialStore);
   const [productId, setProductId] = useState(initial.productId ?? '');
   const [productName, setProductName] = useState(initial.productName ?? '');
   const [price, setPrice] = useState(initial.shelfPrice !== null ? String(initial.shelfPrice) : '');
@@ -88,7 +93,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (!priceValid || !product) return;
+    if (!priceValid || !product || !store) return;
     onSubmit({
       productId: product.id,
       productName: clean(productName) ?? product.name,
@@ -96,6 +101,7 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
       packageSize: clean(packageSize),
       shelfPrice: Math.round(priceNumber * 100) / 100,
       priceUnit: clean(priceUnit),
+      store,
     });
   };
 
@@ -111,6 +117,12 @@ export function ManualConfirmSheet({ title, initial, catalog, notice, submitLabe
         </div>
 
         {notice}
+
+        <div className="field">
+          <span className="field__label">{t('store.title')}</span>
+          <StoreSelect stores={stores} value={store} onChange={setStore} invalid={touched && !store} />
+          {touched && !store && <span className="field__hint" style={{ color: 'var(--color-danger)' }}>{t('store.required')}</span>}
+        </div>
 
         <label className="field">
           <span className="field__label">{t('sheet.product')}</span>

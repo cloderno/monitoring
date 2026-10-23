@@ -2012,3 +2012,12 @@ select.input {
   opacity: 0.4;
   cursor: default;
 }
+
+/* ───────────── Торговые точки ───────────── */
+
+.history-item__place {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

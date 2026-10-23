@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, History, ImageOff, MapPin, PencilLine, Plus, Save, SearchX } from 'lucide-react';
+import { ExternalLink, History, ImageOff, MapPin, PencilLine, Plus, Save, SearchX, Store as StoreIcon } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { LocationMap } from '../components/LocationMap';
 import { ManualConfirmSheet } from '../components/ManualConfirmSheet';
 import { PriceComparisonCard } from '../components/PriceComparisonCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
+import { StoreSelect, storeLabel } from '../components/StorePicker';
 import { useCatalog } from '../hooks/useCatalog';
+import { useStores } from '../hooks/useStores';
 import { useDraft } from '../store/DraftContext';
 import { useHistory } from '../store/HistoryContext';
 import { formatCoords, googleMapsUrl } from '../services/geolocationService';
@@ -37,8 +39,9 @@ export function InspectionResultPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const { get, update, add } = useHistory();
-  const { pending, setPending } = useDraft();
+  const { pending, setPending, setStore } = useDraft();
   const { products } = useCatalog();
+  const { stores } = useStores();
   const [editing, setEditing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const fromHistory = pathname.startsWith('/history');
@@ -73,7 +76,7 @@ export function InspectionResultPage() {
   }, [unsaved]);
 
   const save = () => {
-    if (!draft) return;
+    if (!draft || !draft.storeId) return;
     add(draft);
     setPending(null);
     setJustSaved(true);
@@ -99,6 +102,7 @@ export function InspectionResultPage() {
 
   const i = inspection;
   const isTest = i.locationSource === 'test';
+  const currentStore = stores.find((s) => s.id === i.storeId) ?? null;
 
   return (
     <>
@@ -144,6 +148,30 @@ export function InspectionResultPage() {
 
         <PriceComparisonCard inspection={i} />
 
+        <section className="card appear" style={{ animationDelay: '100ms' }}>
+          <div className="card__header">
+            <span className="card__icon">
+              <StoreIcon size={20} />
+            </span>
+            <h2 className="card__title">{t('store.title')}</h2>
+          </div>
+          {unsaved ? (
+            <StoreSelect
+              stores={stores}
+              value={currentStore}
+              invalid={!currentStore}
+              onChange={(s) => {
+                setStore(s);
+                setPending({ ...i, storeId: s.id, storeName: s.name, storeNumber: s.number });
+              }}
+            />
+          ) : (
+            <div style={{ fontWeight: 600 }}>
+              {i.storeName ? storeLabel(i.storeName, i.storeNumber, stores) : t('store.none')}
+            </div>
+          )}
+        </section>
+
         <section className="card appear" style={{ animationDelay: '120ms' }}>
           <div className="card__header">
             <span className="card__icon">
@@ -188,9 +216,12 @@ export function InspectionResultPage() {
 
         <div className="stack">
           {unsaved ? (
-            <PrimaryButton size="lg" block icon={<Save size={20} />} onClick={save}>
-              {t('result.save')}
-            </PrimaryButton>
+            <>
+              <PrimaryButton size="lg" block icon={<Save size={20} />} onClick={save} disabled={!i.storeId}>
+                {t('result.save')}
+              </PrimaryButton>
+              {!i.storeId && <p className="small" style={{ textAlign: 'center', margin: 0 }}>{t('store.required')}</p>}
+            </>
           ) : (
             <PrimaryButton size="lg" block icon={<Plus size={20} />} onClick={() => navigate('/inspection')}>
               {t('result.new')}
@@ -223,11 +254,14 @@ export function InspectionResultPage() {
           title={t('result.edit')}
           initial={i}
           catalog={products}
+          stores={stores}
+          initialStore={currentStore}
           submitLabel={t('common.save')}
           onCancel={() => setEditing(false)}
           onSubmit={(fields) => {
             const changed = buildInspection({ base: i, fields, catalog: products, location: null, confidence: null, manual: true, photo: null });
             // Несохранённый результат правим в черновике, сохранённый — сразу в истории
+            if (changed.storeId && fields.store) setStore(fields.store);
             if (unsaved) setPending(changed);
             else update(changed);
             setEditing(false);

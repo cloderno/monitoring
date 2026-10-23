@@ -39,7 +39,7 @@ export function HistoryPage() {
     const q = normalizeText(query);
     return items
       .filter((i) => matchesStatus(i, status))
-      .filter((i) => !q || normalizeText(`${i.productName ?? ''} ${inspectionProductLabel(i.productName, i.productId, products) ?? ''} ${i.brand ?? ''}`).includes(q))
+      .filter((i) => !q || normalizeText(`${i.productName ?? ''} ${inspectionProductLabel(i.productName, i.productId, products) ?? ''} ${i.brand ?? ''} ${i.storeName ?? ''}`).includes(q))
       .sort((a, b) => (order === 'desc' ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt)));
   }, [items, query, order, status, products]);
 
@@ -126,7 +126,9 @@ export function HistoryPage() {
                 <div className="history-item__meta">
                   <span>{formatDate(i.createdAt)}</span>
                   <span>·</span>
-                  <span>{(i.locationSource === 'test' ? t('city.shymkent') : i.city) ?? t('history.noPlace')}</span>
+                  <span className="history-item__place">
+                    {i.storeName ?? (i.locationSource === 'test' ? t('city.shymkent') : i.city) ?? t('history.noPlace')}
+                  </span>
                 </div>
               </div>
               <div className="history-item__delta">

@@ -1,5 +1,6 @@
 import type { Inspection, InspectionLocation, RecognitionResult } from '../types/inspection';
 import type { Product } from '../types/product';
+import type { Store } from '../types/store';
 import { t } from '../i18n';
 import { comparePrice } from './priceComparison';
 import { matchProduct } from './productMatching';
@@ -12,6 +13,8 @@ export interface ProductFields {
   packageSize: string | null;
   shelfPrice: number | null;
   priceUnit: string | null;
+  /** Торговая точка; undefined — не менялась */
+  store?: Store | null;
 }
 
 export const newId = () =>
@@ -56,11 +59,14 @@ export function buildInspection(params: {
   fields: ProductFields;
   catalog: Product[];
   location: InspectionLocation | null;
+  /** Точка по умолчанию, если в полях её нет */
+  store?: Store | null;
   confidence: number | null;
   manual: boolean;
   photo: string | null;
 }): Inspection {
   const { base, fields, catalog, location, confidence, manual, photo } = params;
+  const store = fields.store !== undefined ? fields.store : params.store;
   const product = catalog.find((p) => p.id === fields.productId) ?? null;
   const cmp = comparePrice(fields.shelfPrice, fields.priceUnit, fields.packageSize, product);
   const comparable = cmp.comparison !== 'not_comparable';
@@ -88,6 +94,9 @@ export function buildInspection(params: {
     longitude: base ? base.longitude : location?.longitude ?? null,
     city: base ? base.city : location?.city ?? null,
     locationSource: base ? base.locationSource : location?.source ?? 'gps',
+    storeId: store !== undefined ? store?.id ?? null : base?.storeId ?? null,
+    storeName: store !== undefined ? store?.name ?? null : base?.storeName ?? null,
+    storeNumber: store !== undefined ? store?.number ?? null : base?.storeNumber ?? null,
     locationCapturedAt: base ? base.locationCapturedAt : location?.capturedAt ?? null,
     status: comparable ? 'success' : 'needs_confirmation',
     confidence: base ? base.confidence : confidence,

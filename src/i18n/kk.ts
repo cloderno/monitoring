@@ -61,7 +61,7 @@ export const kk: Record<MessageKey, string> = {
   'history.total': 'Барлығы: {n}',
   'history.emptyTitle': 'Әзірге тексерулер жоқ',
   'history.emptyText': 'Тексеру нәтижелері осында көрсетіледі.',
-  'history.search': 'Тауар бойынша іздеу',
+  'history.search': 'Тауар немесе нүкте бойынша іздеу',
   'history.filterAria': 'Тауар бойынша сүзгі',
   'history.sortAria': 'Күні бойынша сұрыптау',
   'history.newest': 'Алдымен жаңалары',
@@ -189,6 +189,10 @@ export const kk: Record<MessageKey, string> = {
   'catalog.headProduct': 'Тауар',
   'catalog.headPrices': 'Бөлшек / көтерме сатып алу',
   'catalog.wholesaleShort': 'көтерме',
+  'store.title': 'Сауда нүктесі',
+  'store.choose': '— Сауда нүктесін таңдаңыз —',
+  'store.required': 'Сауда нүктесін таңдаңыз',
+  'store.none': 'Көрсетілмеген',
 
   // Сравнение цен
   'cmp.title': 'Бағаларды салыстыру',

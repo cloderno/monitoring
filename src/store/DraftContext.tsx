@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useGeolocation, type GeolocationState } from '../hooks/useGeolocation';
 import type { Inspection } from '../types/inspection';
+import type { Store } from '../types/store';
 
 export interface DraftPhoto {
   file: File;
@@ -14,6 +15,20 @@ interface DraftContextValue {
   /** Готовый, но ещё не сохранённый результат: в историю попадает только по кнопке «Сохранить результат» */
   pending: Inspection | null;
   setPending: (inspection: Inspection | null) => void;
+  /** Выбранная торговая точка — запоминается до смены, чтобы не выбирать её для каждого товара */
+  store: Store | null;
+  setStore: (store: Store) => void;
+}
+
+const STORE_KEY = 'szpt.store';
+
+function readStore(): Store | null {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? (JSON.parse(raw) as Store) : null;
+  } catch {
+    return null;
+  }
 }
 
 const DraftContext = createContext<DraftContextValue | null>(null);
@@ -23,6 +38,16 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const geo = useGeolocation();
   const [photo, setPhoto] = useState<DraftPhoto | null>(null);
   const [pending, setPending] = useState<Inspection | null>(null);
+  const [store, setStoreState] = useState<Store | null>(readStore);
+
+  const setStore = useCallback((s: Store) => {
+    setStoreState(s);
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    } catch {
+      // выбор сохранится только до перезагрузки
+    }
+  }, []);
 
   const setPhotoFile = useCallback((file: File | null) => {
     setPhoto(file ? { file, url: URL.createObjectURL(file) } : null);
@@ -35,7 +60,10 @@ export function DraftProvider({ children }: { children: ReactNode }) {
     [photo],
   );
 
-  const value = useMemo(() => ({ geo, photo, setPhotoFile, pending, setPending }), [geo, photo, setPhotoFile, pending]);
+  const value = useMemo(
+    () => ({ geo, photo, setPhotoFile, pending, setPending, store, setStore }),
+    [geo, photo, setPhotoFile, pending, store, setStore],
+  );
   return <DraftContext.Provider value={value}>{children}</DraftContext.Provider>;
 }
 

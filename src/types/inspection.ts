@@ -52,6 +52,10 @@ export interface Inspection {
   longitude: number | null;
   city: string | null;
   locationSource: LocationSource;
+  /** Торговая точка из перечня; в старых записях отсутствует */
+  storeId?: string | null;
+  storeName?: string | null;
+  storeNumber?: number | null;
   locationCapturedAt: string | null;
   status: 'success' | 'needs_confirmation' | 'error';
   confidence: number | null;

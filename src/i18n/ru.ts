@@ -59,7 +59,7 @@ export const ru = {
   'history.total': 'Всего: {n}',
   'history.emptyTitle': 'Проверок пока нет',
   'history.emptyText': 'Результаты проверок будут появляться здесь.',
-  'history.search': 'Поиск по товару',
+  'history.search': 'Поиск по товару или точке',
   'history.filterAria': 'Фильтр по товару',
   'history.sortAria': 'Сортировка по дате',
   'history.newest': 'Сначала новые',
@@ -187,6 +187,10 @@ export const ru = {
   'catalog.headProduct': 'Товар',
   'catalog.headPrices': 'Розница / опт. закупка',
   'catalog.wholesaleShort': 'опт',
+  'store.title': 'Торговая точка',
+  'store.choose': '— Выберите торговую точку —',
+  'store.required': 'Выберите торговую точку',
+  'store.none': 'Не указана',
 
   // Сравнение цен
   'cmp.title': 'Сравнение цен',

@@ -8,6 +8,7 @@ import { PhotoUpload } from '../components/PhotoUpload';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
 import { useCatalog } from '../hooks/useCatalog';
+import { useStores } from '../hooks/useStores';
 import { useAuth } from '../store/AuthContext';
 import { useDraft } from '../store/DraftContext';
 import { recognizePhoto } from '../services/geminiService';
@@ -58,7 +59,8 @@ export function InspectionPage() {
   const navigate = useNavigate();
   const { t, lang } = useI18n();
   const { session, logout } = useAuth();
-  const { geo, photo, setPhotoFile, setPending } = useDraft();
+  const { geo, photo, setPhotoFile, setPending, store, setStore } = useDraft();
+  const { stores } = useStores();
   const { products, error: catalogError, retry: retryCatalog } = useCatalog();
   const [phase, setPhase] = useState<Phase>({ kind: 'form' });
   const thumbnailRef = useRef<string | null>(null);
@@ -75,6 +77,7 @@ export function InspectionPage() {
 
   /** Готовит результат и открывает его. В историю он попадёт только по кнопке «Сохранить результат» */
   const finish = async (fields: ProductFields, confidence: number | null, manual: boolean) => {
+    if (fields.store) setStore(fields.store);
     // При ручном вводе фото не распознавалось — миниатюру для истории делаем здесь
     if (!thumbnailRef.current && photo) {
       try {
@@ -87,6 +90,7 @@ export function InspectionPage() {
       fields,
       catalog: products,
       location,
+      store: fields.store !== undefined ? fields.store : store,
       confidence,
       manual,
       photo: thumbnailRef.current,
@@ -239,6 +243,8 @@ export function InspectionPage() {
           title={phase.recognized ? t('insp.checkData') : t('insp.manualTitle')}
           initial={phase.fields}
           catalog={products}
+          stores={stores}
+          initialStore={store}
           notice={
             phase.recognized ? (
               <StatusMessage tone="warning" title={t('insp.needConfirm')}>
