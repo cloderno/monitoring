@@ -3,6 +3,7 @@ import { Camera, ImagePlus, Plus, RefreshCw, ScanLine, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import type { DraftPhoto } from '../store/DraftContext';
 import { validatePhoto } from '../utils/image';
+import { CameraDialog, canUseWebcam } from './CameraDialog';
 import { PrimaryButton } from './PrimaryButton';
 import { StatusMessage } from './StatusMessage';
 
@@ -32,6 +33,7 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [imageBroken, setImageBroken] = useState(false);
   const [extras, setExtras] = useState<ExtraPhoto[]>([]);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const extrasRef = useRef(extras);
   extrasRef.current = extras;
 
@@ -53,6 +55,18 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
     if (accepted.length) {
       setExtras((list) => [...list, ...accepted.map((f) => ({ id: newPhotoId(), url: URL.createObjectURL(f) }))]);
     }
+  };
+
+  const takePhoto = () => {
+    if (canUseWebcam()) setCameraOpen(true);
+    else cameraRef.current?.click();
+  };
+
+  const acceptCaptured = (file: File) => {
+    setCameraOpen(false);
+    setError(null);
+    setImageBroken(false);
+    onChange(file);
   };
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +170,7 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
         <PrimaryButton
           variant={photo ? 'secondary' : 'primary'}
           icon={photo ? <RefreshCw size={18} /> : <Camera size={18} />}
-          onClick={() => cameraRef.current?.click()}
+          onClick={takePhoto}
           disabled={disabled}
         >
           {photo ? t('photo.retake') : t('photo.take')}
@@ -175,6 +189,17 @@ export function PhotoUpload({ photo, onChange, disabled }: Props) {
       <input ref={cameraRef} className="visually-hidden" type="file" accept={ACCEPT} capture="environment" onChange={handleFile} tabIndex={-1} />
       <input ref={galleryRef} className="visually-hidden" type="file" accept={ACCEPT} multiple onChange={handleFile} tabIndex={-1} />
       <input ref={extraRef} className="visually-hidden" type="file" accept={ACCEPT} multiple onChange={handleExtra} tabIndex={-1} />
+
+      {cameraOpen && (
+        <CameraDialog
+          onCapture={acceptCaptured}
+          onClose={() => setCameraOpen(false)}
+          onPickFile={() => {
+            setCameraOpen(false);
+            galleryRef.current?.click();
+          }}
+        />
+      )}
 
       <div style={{ marginTop: 12 }}>
         {error ? (
