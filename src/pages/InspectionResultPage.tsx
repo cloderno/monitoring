@@ -7,7 +7,6 @@ import { ManualConfirmSheet } from '../components/ManualConfirmSheet';
 import { PriceComparisonCard } from '../components/PriceComparisonCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { StatusMessage } from '../components/StatusMessage';
-import { TestBadge, testWarning } from '../components/LocationCard';
 import { useCatalog } from '../hooks/useCatalog';
 import { useDraft } from '../store/DraftContext';
 import { useHistory } from '../store/HistoryContext';
@@ -151,7 +150,6 @@ export function InspectionResultPage() {
               <MapPin size={20} />
             </span>
             <h2 className="card__title">{t('result.place')}</h2>
-            {isTest && <TestBadge />}
           </div>
           <div className="kv">
             <div className="kv__row">
@@ -173,17 +171,11 @@ export function InspectionResultPage() {
               <span className="kv__value">{isTest ? t('result.sourceTest') : t('result.sourceGps')}</span>
             </div>
           </div>
-          {isTest && (
-            <div style={{ marginTop: 10 }}>
-              <StatusMessage tone="warning">{testWarning()}</StatusMessage>
-            </div>
-          )}
           {i.latitude !== null && i.longitude !== null && (
             <div className="stack" style={{ marginTop: 12 }}>
               <LocationMap
                 latitude={i.latitude}
                 longitude={i.longitude}
-                isTest={isTest}
                 label={(isTest ? t('city.shymkent') : i.city) ?? undefined}
                 zoom={isTest ? 12 : 15}
               />

@@ -24,7 +24,6 @@ export function SettingsPage() {
           <span className="avatar avatar--lg">{initials(user.fullName)}</span>
           <div className="profile-name">{user.fullName}</div>
           <div className="muted">{role}</div>
-          {user.demo && <span className="badge badge--warning" style={{ marginTop: 6 }}>{t('settings.demoBadge')}</span>}
         </section>
 
         <section className="card appear" style={{ animationDelay: '40ms' }}>

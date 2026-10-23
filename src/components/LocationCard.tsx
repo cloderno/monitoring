@@ -1,6 +1,6 @@
 import { Crosshair, ExternalLink, MapPin } from 'lucide-react';
 import type { GeolocationState } from '../hooks/useGeolocation';
-import { t, useI18n, type MessageKey } from '../i18n';
+import { useI18n, type MessageKey } from '../i18n';
 import { formatCoords, googleMapsUrl } from '../services/geolocationService';
 import { LocationMap } from './LocationMap';
 import { PrimaryButton } from './PrimaryButton';
@@ -14,17 +14,9 @@ const GEO_ERRORS: Record<string, MessageKey> = {
   insecure: 'geoErr.insecure',
 };
 
-/** Предупреждение о тестовом местоположении на текущем языке */
-export const testWarning = () => t('loc.testWarning');
-
-export function TestBadge() {
-  const { t } = useI18n();
-  return <span className="badge badge--test">{t('loc.testBadge')}</span>;
-}
-
 /** Карточка «Место проверки» на экране проверки: реальная геолокация или тестовая точка */
 export function LocationCard({ geo }: { geo: GeolocationState }) {
-  const { location, status, error, isTest, testMode, testChoice } = geo;
+  const { location, status, error, isTest, testMode } = geo;
   const { t } = useI18n();
 
   return (
@@ -37,7 +29,6 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
           <div className="card__step">{t('loc.step')}</div>
           <h2 className="card__title">{t('loc.title')}</h2>
         </div>
-        {isTest && <TestBadge />}
       </div>
 
       <div className="stack">
@@ -52,9 +43,7 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
                   : `${t('loc.sourceGps')}${location.accuracy ? t('loc.accuracy', { n: location.accuracy }) : ''}`}
               </div>
             </div>
-            <span className={`badge ${isTest ? 'badge--warning' : 'badge--success'}`}>
-              {isTest ? t('loc.badgeTest') : t('loc.badgeDetected')}
-            </span>
+            {!isTest && <span className="badge badge--success">{t('loc.badgeDetected')}</span>}
           </div>
         ) : status === 'loading' ? (
           <div className="inline muted">
@@ -71,7 +60,6 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
             <LocationMap
               latitude={location.latitude}
               longitude={location.longitude}
-              isTest={isTest}
               label={(isTest ? t('city.shymkent') : location.city) ?? undefined}
               zoom={isTest ? 12 : 15}
             />
@@ -98,47 +86,19 @@ export function LocationCard({ geo }: { geo: GeolocationState }) {
           </PrimaryButton>
         )}
 
-        <label className="switch-row">
-          <span>
-            <b style={{ fontSize: 14.5 }}>{t('loc.testTitle')}</b>
-            <div className="small">{t('loc.testHint')}</div>
-          </span>
+        {/* Только переключатель: включён — точка в Шымкенте, выключен — реальный GPS */}
+        <div className="switch-row switch-row--bare">
           <span className="switch">
             <input
               type="checkbox"
               role="switch"
+              aria-label={t('loc.testTitle')}
               checked={testMode}
               onChange={(e) => geo.setTestMode(e.target.checked)}
             />
             <span className="switch__track" />
           </span>
-        </label>
-
-        {testMode && (
-          <div className="stack reveal">
-            <div className="segmented" role="radiogroup" aria-label={t('loc.sourceAria')}>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={testChoice === 'real'}
-                className={testChoice === 'real' ? 'is-active' : ''}
-                onClick={() => geo.setTestChoice('real')}
-              >
-                {t('loc.real')}
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={testChoice === 'shymkent'}
-                className={testChoice === 'shymkent' ? 'is-active' : ''}
-                onClick={() => geo.setTestChoice('shymkent')}
-              >
-                {t('loc.shymkentTest')}
-              </button>
-            </div>
-            {isTest && <StatusMessage tone="warning">{testWarning()}</StatusMessage>}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

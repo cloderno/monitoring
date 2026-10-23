@@ -126,7 +126,6 @@ export function LoginPage() {
 
       <footer className="login__footer">
         <p className="small">{t('login.footer')}</p>
-        <span className="badge badge--neutral">{t('login.version')}</span>
       </footer>
     </div>
   );

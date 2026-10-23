@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Crosshair, FlaskConical, PencilLine, RotateCcw, Sparkles } from 'lucide-react';
+import { Camera, Crosshair, PencilLine, RotateCcw, Sparkles } from 'lucide-react';
 import { AppHeader } from '../components/AppHeader';
 import { LocationCard } from '../components/LocationCard';
 import { ManualConfirmSheet } from '../components/ManualConfirmSheet';
@@ -39,7 +39,7 @@ const EMPTY_FIELDS: ProductFields = {
 function GeoIndicator({ status, isTest }: { status: string; isTest: boolean }) {
   const { t } = useI18n();
   const [cls, label] = isTest
-    ? ['test', t('insp.geoTest')]
+    ? ['ready', t('city.shymkent')]
     : status === 'ready'
       ? ['ready', 'GPS']
       : status === 'loading'
@@ -178,16 +178,11 @@ export function InspectionPage() {
             tone="warning"
             title={t('insp.needLocation')}
             actions={
-              <>
-                {!geo.testMode && (
-                  <PrimaryButton size="sm" variant="secondary" icon={<Crosshair size={16} />} onClick={geo.requestGps}>
-                    {t('insp.detect')}
-                  </PrimaryButton>
-                )}
-                <PrimaryButton size="sm" variant="secondary" icon={<FlaskConical size={16} />} onClick={() => geo.setTestMode(true)}>
-                  {t('insp.testGeo')}
+              !geo.testMode && (
+                <PrimaryButton size="sm" variant="secondary" icon={<Crosshair size={16} />} onClick={geo.requestGps}>
+                  {t('insp.detect')}
                 </PrimaryButton>
-              </>
+              )
             }
           >
             {t('insp.needLocationText')}

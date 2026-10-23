@@ -127,7 +127,6 @@ export function HistoryPage() {
                   <span>{formatDate(i.createdAt)}</span>
                   <span>·</span>
                   <span>{(i.locationSource === 'test' ? t('city.shymkent') : i.city) ?? t('history.noPlace')}</span>
-                  {i.locationSource === 'test' && <span className="badge badge--warning" style={{ padding: '1px 6px' }}>{t('history.testShort')}</span>}
                 </div>
               </div>
               <div className="history-item__delta">
@@ -142,10 +141,6 @@ export function HistoryPage() {
               </div>
             </Link>
           ))}
-
-          <p className="small" style={{ textAlign: 'center', marginTop: 8 }}>
-            {t('history.footer')}
-          </p>
         </div>
       )}
     </>
