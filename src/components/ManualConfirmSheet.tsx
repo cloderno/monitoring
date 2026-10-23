@@ -6,6 +6,7 @@ import type { Product } from '../types/product';
 import type { Store } from '../types/store';
 import type { ProductFields } from '../utils/inspection';
 import { comparePrice, comparisonLabel, describeDifference, formatPrice, normalizeUnit, perUnitLabel } from '../utils/priceComparison';
+import { Combobox } from './Combobox';
 import { PrimaryButton } from './PrimaryButton';
 import { StoreSelect } from './StorePicker';
 
@@ -63,7 +64,6 @@ export function ManualConfirmSheet({ title, initial, catalog, stores, initialSto
   const { lang } = useI18n();
   const [store, setStore] = useState<Store | null>(initialStore);
   const [productId, setProductId] = useState(initial.productId ?? '');
-  const [productName, setProductName] = useState(initial.productName ?? '');
   const [price, setPrice] = useState(initial.shelfPrice !== null ? String(initial.shelfPrice) : '');
   const initialPackage = useMemo(() => splitPackageSize(initial.packageSize), [initial.packageSize]);
   const [packageAmount, setPackageAmount] = useState(initialPackage.amount);
@@ -75,6 +75,19 @@ export function ManualConfirmSheet({ title, initial, catalog, stores, initialSto
   const priceNumber = Number(price.replace(/\s/g, '').replace(',', '.'));
   const priceValid = price.trim() !== '' && Number.isFinite(priceNumber) && priceNumber > 0;
   const product = catalog.find((p) => p.id === productId) ?? null;
+  // Ищем и по русскому, и по казахскому названию, и по синонимам из каталога
+  const productOptions = useMemo(
+    () =>
+      catalog.map((p) => ({
+        value: p.id,
+        label: productLabel(p),
+        hint: `${t('sheet.retailShort')} ${formatPrice(p.retailPrice)} ${perUnitLabel(p.unit)}`,
+        keywords: [p.name, p.nameKk, ...(p.aliases ?? [])].filter(Boolean).join(' '),
+      })),
+    // lang — подписи на текущем языке
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [catalog, lang],
+  );
   const packageUnit = packageUnitChoice ?? defaultPackageUnit(product);
   const amountNumber = Number(packageAmount.replace(/\s/g, '').replace(',', '.'));
   const packageSize = packageAmount.trim() && Number.isFinite(amountNumber) && amountNumber > 0 ? `${packageAmount.trim()} ${packageUnit}` : '';
@@ -96,7 +109,8 @@ export function ManualConfirmSheet({ title, initial, catalog, stores, initialSto
     if (!priceValid || !product || !store) return;
     onSubmit({
       productId: product.id,
-      productName: clean(productName) ?? product.name,
+      // Распознанное название оставляем, только если товар не меняли
+      productName: product.id === initial.productId ? initial.productName ?? product.name : product.name,
       brand: initial.brand,
       packageSize: clean(packageSize),
       shelfPrice: Math.round(priceNumber * 100) / 100,
@@ -124,27 +138,18 @@ export function ManualConfirmSheet({ title, initial, catalog, stores, initialSto
           {touched && !store && <span className="field__hint" style={{ color: 'var(--color-danger)' }}>{t('store.required')}</span>}
         </div>
 
-        <label className="field">
+        <div className="field">
           <span className="field__label">{t('sheet.product')}</span>
-          <select
-            className={`input${touched && !product ? ' is-invalid' : ''}`}
+          <Combobox
+            options={productOptions}
             value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-          >
-            <option value="">{t('sheet.chooseProduct')}</option>
-            {catalog.map((p) => (
-              <option key={p.id} value={p.id}>
-                {productLabel(p)} · {t('sheet.retailShort')} {formatPrice(p.retailPrice)} {perUnitLabel(p.unit)}
-              </option>
-            ))}
-          </select>
+            onChange={setProductId}
+            placeholder={t('sheet.chooseProduct')}
+            ariaLabel={t('sheet.product')}
+            invalid={touched && !product}
+          />
           {touched && !product && <span className="field__hint" style={{ color: 'var(--color-danger)' }}>{t('sheet.chooseProductHint')}</span>}
-        </label>
-
-        <label className="field">
-          <span className="field__label">{t('sheet.productName')}</span>
-          <input className="input" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder={t('sheet.productNamePlaceholder')} />
-        </label>
+        </div>
 
         <div className="btn-row btn-row--fields">
           <label className="field">

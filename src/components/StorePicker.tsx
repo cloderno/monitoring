@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useI18n } from '../i18n';
 import type { Store } from '../types/store';
+import { Combobox } from './Combobox';
 
 interface Props {
   stores: Store[];
@@ -19,29 +20,29 @@ export function storeLabel(name: string, number: number | null | undefined, stor
   return duplicates && number ? `${name} · № ${number}` : name;
 }
 
-/** Поле «Торговая точка» — обычный выпадающий список, как выбор товара из каталога, по алфавиту */
+/** Поле «Торговая точка» — список с поиском по названию или номеру, по алфавиту */
 export function StoreSelect({ stores, value, onChange, invalid, disabled }: Props) {
   const { t } = useI18n();
-  const sorted = useMemo(() => [...stores].sort((a, b) => collator.compare(a.name, b.name) || a.number - b.number), [stores]);
+  const options = useMemo(
+    () =>
+      [...stores]
+        .sort((a, b) => collator.compare(a.name, b.name) || a.number - b.number)
+        .map((s) => ({ value: s.id, label: storeLabel(s.name, s.number, stores), keywords: String(s.number) })),
+    [stores],
+  );
 
   return (
-    <select
-      className={`input${invalid ? ' is-invalid' : ''}`}
+    <Combobox
+      options={options}
       value={value?.id ?? ''}
-      disabled={disabled}
-      onChange={(e) => {
-        const store = stores.find((s) => s.id === e.target.value);
+      onChange={(id) => {
+        const store = stores.find((s) => s.id === id);
         if (store) onChange(store);
       }}
-    >
-      <option value="" disabled>
-        {t('store.choose')}
-      </option>
-      {sorted.map((s) => (
-        <option key={s.id} value={s.id}>
-          {storeLabel(s.name, s.number, stores)}
-        </option>
-      ))}
-    </select>
+      placeholder={t('store.choose')}
+      ariaLabel={t('store.title')}
+      invalid={invalid}
+      disabled={disabled}
+    />
   );
 }

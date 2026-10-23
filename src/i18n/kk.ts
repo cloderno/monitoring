@@ -14,6 +14,7 @@ export const kk: Record<MessageKey, string> = {
   'common.continue': 'Жалғастыру',
   'common.logout': 'Шығу',
   'common.nothingFound': 'Ештеңе табылмады',
+  'combo.typeToSearch': 'Теріп бастаңыз…',
   'lang.title': 'Интерфейс тілі',
   'lang.aria': 'Тіл',
   'role.inspector': 'Баға мониторингі инспекторы',
@@ -190,7 +191,7 @@ export const kk: Record<MessageKey, string> = {
   'catalog.headPrices': 'Бөлшек / көтерме сатып алу',
   'catalog.wholesaleShort': 'көтерме',
   'store.title': 'Сауда нүктесі',
-  'store.choose': '— Сауда нүктесін таңдаңыз —',
+  'store.choose': 'Нүктені таңдаңыз',
   'store.required': 'Сауда нүктесін таңдаңыз',
   'store.none': 'Көрсетілмеген',
 
@@ -239,11 +240,9 @@ export const kk: Record<MessageKey, string> = {
 
   // Форма подтверждения
   'sheet.product': 'Каталогтағы тауар',
-  'sheet.chooseProduct': '— Тауарды таңдаңыз —',
+  'sheet.chooseProduct': 'Тауарды таңдаңыз',
   'sheet.retailShort': 'бөлш.',
   'sheet.chooseProductHint': 'Салыстыру үшін тауарды таңдаңыз',
-  'sheet.productName': 'Тауар атауы',
-  'sheet.productNamePlaceholder': 'Мысалы, «Макфа» макароны',
   'sheet.price': 'Баға белгісіндегі баға, ₸',
   'sheet.package': 'Қаптама',
   'sheet.packageAmountAria': 'Қаптамадағы мөлшер',

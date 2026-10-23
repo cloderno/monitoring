@@ -12,6 +12,7 @@ export const ru = {
   'common.continue': 'Продолжить',
   'common.logout': 'Выйти',
   'common.nothingFound': 'Ничего не найдено',
+  'combo.typeToSearch': 'Начните вводить…',
   'lang.title': 'Язык интерфейса',
   'lang.aria': 'Язык',
   'role.inspector': 'Инспектор мониторинга цен',
@@ -188,7 +189,7 @@ export const ru = {
   'catalog.headPrices': 'Розница / опт. закупка',
   'catalog.wholesaleShort': 'опт',
   'store.title': 'Торговая точка',
-  'store.choose': '— Выберите торговую точку —',
+  'store.choose': 'Выберите точку',
   'store.required': 'Выберите торговую точку',
   'store.none': 'Не указана',
 
@@ -237,11 +238,9 @@ export const ru = {
 
   // Форма подтверждения
   'sheet.product': 'Товар из каталога',
-  'sheet.chooseProduct': '— Выберите товар —',
+  'sheet.chooseProduct': 'Выберите товар',
   'sheet.retailShort': 'розн.',
   'sheet.chooseProductHint': 'Выберите товар для сравнения',
-  'sheet.productName': 'Название товара',
-  'sheet.productNamePlaceholder': 'Например, Рожки «Макфа»',
   'sheet.price': 'Цена на ценнике, ₸',
   'sheet.package': 'Фасовка',
   'sheet.packageAmountAria': 'Количество в упаковке',
